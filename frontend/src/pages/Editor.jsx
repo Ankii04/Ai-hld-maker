@@ -21,6 +21,8 @@ import {
 } from 'lucide-react'
 import useDesignStore from '../store/designStore'
 import useAuthStore from '../store/authStore'
+import { toast } from 'react-hot-toast'
+import { exportTabAsPDF, generateOpenAPIYAML } from '../utils/exportPDF'
 import RequirementsPanel from '../components/editor/RequirementsPanel'
 import TabBar from '../components/editor/TabBar'
 import HLDTab from '../components/editor/HLDTab'
@@ -108,11 +110,10 @@ const UpgradeModal = ({ onClose }) => (
 
 const exportOptions = [
   { label: 'Export as PDF', icon: FileText, pro: true },
-  { label: 'Copy OpenAPI YAML', icon: Copy, pro: true },
   { label: 'Export as JSON', icon: Globe, pro: false },
 ]
 
-const ExportDropdown = ({ onUpgradeClick, isPro }) => {
+const ExportDropdown = ({ currentDesign, activeTab, onUpgradeClick, isPro }) => {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -124,14 +125,51 @@ const ExportDropdown = ({ onUpgradeClick, isPro }) => {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const handleOption = (opt) => {
+  const handleOption = async (opt) => {
     if (opt.pro && !isPro) {
       setOpen(false)
       onUpgradeClick()
       return
     }
-    // handle export
+
+    if (!currentDesign) {
+      toast.error('No active design to export')
+      setOpen(false)
+      return
+    }
+
     setOpen(false)
+
+    try {
+      if (opt.label === 'Export as PDF') {
+        const elementId = `${activeTab}-tab`
+        const filename = `${currentDesign.title || 'design'}-${activeTab}`
+        const toastId = toast.loading('Exporting PDF...')
+        await exportTabAsPDF(elementId, filename)
+        toast.success('PDF downloaded successfully', { id: toastId })
+      } else if (opt.label === 'Copy OpenAPI YAML') {
+        const yaml = generateOpenAPIYAML(currentDesign)
+        if (yaml) {
+          await navigator.clipboard.writeText(yaml)
+          toast.success('OpenAPI YAML copied to clipboard')
+        } else {
+          toast.error('No services or API endpoints found to export')
+        }
+      } else if (opt.label === 'Export as JSON') {
+        const jsonStr = JSON.stringify(currentDesign, null, 2)
+        const blob = new Blob([jsonStr], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${currentDesign.title || 'design'}.json`
+        a.click()
+        URL.revokeObjectURL(url)
+        toast.success('Design JSON downloaded')
+      }
+    } catch (err) {
+      toast.error('Export failed')
+      console.error('Export error:', err)
+    }
   }
 
   return (
@@ -365,6 +403,43 @@ const Editor = () => {
 
   const isPro = user?.plan === 'pro'
 
+  const handleShare = async () => {
+    if (!currentDesign) return
+    const designId = currentDesign._id || currentDesign.id
+    const toastId = toast.loading('Generating share link...')
+    try {
+      const res = await useDesignStore.getState().shareDesign(designId)
+      if (res.success) {
+        const shareUrl = `${window.location.origin}/share/${res.shareId}`
+        await navigator.clipboard.writeText(shareUrl)
+        toast.success('Share link copied to clipboard', { id: toastId })
+      } else {
+        if (res.message?.includes('UPGRADE_REQUIRED')) {
+          toast.dismiss(toastId)
+          setShowUpgrade(true)
+        } else {
+          toast.error(res.message || 'Failed to generate share link', { id: toastId })
+        }
+      }
+    } catch (err) {
+      toast.error('Failed to generate share link', { id: toastId })
+    }
+  }
+
+  const handleExportPDF = async () => {
+    if (!currentDesign) return
+    const elementId = `${activeTab}-tab`
+    const filename = `${currentDesign.title || 'design'}-${activeTab}`
+    const toastId = toast.loading('Generating PDF...')
+    try {
+      await exportTabAsPDF(elementId, filename)
+      toast.success('PDF downloaded successfully', { id: toastId })
+    } catch (err) {
+      toast.error('Failed to export PDF', { id: toastId })
+      console.error('PDF export error:', err)
+    }
+  }
+
   /* keyboard shortcut: Ctrl+S */
   useEffect(() => {
     const handler = (e) => {
@@ -442,13 +517,16 @@ const Editor = () => {
             </button>
 
             <ExportDropdown
+              currentDesign={currentDesign}
+              activeTab={activeTab}
               onUpgradeClick={() => setShowUpgrade(true)}
               isPro={isPro}
             />
 
             <button
-              onClick={() => setShowUpgrade(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#2a2a3d] text-[#94a3b8] hover:text-[#f1f5f9] hover:border-blue-500/30 text-sm font-medium transition-all duration-200"
+              onClick={handleShare}
+              disabled={!currentDesign}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#2a2a3d] text-[#94a3b8] hover:text-[#f1f5f9] hover:border-blue-500/30 text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Share2 className="w-4 h-4" />
               <span className="hidden sm:inline">Share</span>
@@ -494,7 +572,7 @@ const Editor = () => {
                 <TabBar
                   activeTab={activeTab}
                   onTabChange={setActiveTab}
-                  onUpgradeClick={() => setShowUpgrade(true)}
+                  onExportPDF={handleExportPDF}
                   hasDesign={!!currentDesign}
                 />
                 

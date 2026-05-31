@@ -1,4 +1,4 @@
-import { FileText, Share2 } from 'lucide-react'
+import { FileText } from 'lucide-react'
 
 const TABS = [
   { id: 'hld', label: 'HLD' },
@@ -14,7 +14,6 @@ export default function TabBar({
   activeTab = 'hld',
   onTabChange,
   onExportPDF,
-  onShare,
   hasDesign = false,
 }) {
   return (
@@ -55,15 +54,6 @@ export default function TabBar({
         >
           <FileText size={13} />
           PDF
-        </button>
-        <button
-          onClick={onShare}
-          disabled={!hasDesign}
-          title="Share design"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-[#2a2a3d] bg-[#1a1a28] text-[#94a3b8] hover:border-[#8b5cf6]/60 hover:text-[#8b5cf6] hover:bg-[#8b5cf6]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-        >
-          <Share2 size={13} />
-          Share
         </button>
       </div>
     </div>

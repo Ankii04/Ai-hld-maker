@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { generateOpenAPIYAML } from '../../utils/exportPDF'
-import { Download, Lock, Copy, ChevronDown, ChevronRight, Check } from 'lucide-react'
+import { Lock, Copy, ChevronDown, ChevronRight, Check } from 'lucide-react'
 
 const METHOD_STYLES = {
   GET:    { bg: '#14532d', text: '#4ade80', border: '#16a34a' },
@@ -155,18 +154,6 @@ function ServiceAccordion({ service }) {
 export default function APITab({ design }) {
   const services = design?.lld?.services || []
 
-  const handleDownloadYAML = () => {
-    const yaml = generateOpenAPIYAML(design)
-    if (!yaml) return
-    const blob = new Blob([yaml], { type: 'text/yaml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${design?.title || 'api'}-openapi.yaml`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   if (!design) {
     return (
       <div className="flex items-center justify-center h-64 text-[#4a4a6a] text-sm p-6">
@@ -186,13 +173,6 @@ export default function APITab({ design }) {
             across {services.length} services
           </p>
         </div>
-        <button
-          onClick={handleDownloadYAML}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-[#1a1a28] border border-[#2a2a3d] text-[#94a3b8] hover:border-[#3b82f6]/60 hover:text-[#3b82f6] hover:bg-[#3b82f6]/10 transition-all"
-        >
-          <Download size={14} />
-          Download OpenAPI YAML
-        </button>
       </div>
 
       {/* Service accordions */}
