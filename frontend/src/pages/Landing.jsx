@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
 import {
@@ -16,6 +17,12 @@ import {
   Github,
   Twitter,
   Linkedin,
+  Server,
+  Cpu,
+  BookOpen,
+  Terminal,
+  Copy,
+  Check,
 } from 'lucide-react'
 
 /* ─────────────────────────── helpers ─────────────────────────── */
@@ -221,7 +228,7 @@ const Hero = () => {
           </h1>
           <p className="text-[#94a3b8] text-lg lg:text-xl leading-relaxed mb-10 max-w-xl">
             Describe your product in plain English. ArchMind instantly generates
-            HLD, LLD, Database schemas, API contracts, and UI/UX blueprints —
+            HLD, LLD, Database schemas, API contracts, and Scalability guides —
             production-ready, in seconds.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -295,13 +302,6 @@ const features = [
     tag: 'OpenAPI 3.0',
   },
   {
-    icon: Layout,
-    title: 'UI/UX Blueprints',
-    desc: 'Screen wireframes, component hierarchy, design token system, and user journey maps.',
-    color: 'pink',
-    tag: 'Wireframes',
-  },
-  {
     icon: TrendingUp,
     title: 'Scalability Guide',
     desc: 'Load balancing strategies, caching layers, CDN configuration, and horizontal scaling recommendations.',
@@ -335,7 +335,7 @@ const Features = () => (
           Everything You Need
         </div>
         <h2 className="font-heading text-4xl lg:text-5xl font-bold text-[#f1f5f9] mb-4">
-          One prompt. <GradientText>Six deliverables.</GradientText>
+          One prompt. <GradientText>Five deliverables.</GradientText>
         </h2>
         <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
           ArchMind generates a complete technical blueprint across all dimensions of your product — no more context switching between tools.
@@ -381,7 +381,7 @@ const steps = [
     num: '02',
     icon: BrainCircuit,
     title: 'AI Generates Blueprint',
-    desc: 'ArchMind\'s AI analyzes your input and generates a full technical blueprint: HLD, LLD, DB schema, API spec, UI flows, and scaling strategy.',
+    desc: 'ArchMind\'s AI analyzes your input and generates a full technical blueprint: HLD, LLD, DB schema, API spec, and scaling strategy.',
     color: 'purple',
   },
   {
@@ -436,7 +436,7 @@ const freeTiers = [
   'HLD + LLD diagrams',
   'Database schema',
   'API contract',
-  'UI/UX blueprint',
+  'Scalability guide',
 ]
 const freeNot = ['Challenge Mode', 'PDF Export', 'OpenAPI YAML', 'Share links']
 const proTiers = [
@@ -444,7 +444,7 @@ const proTiers = [
   'HLD + LLD diagrams',
   'Database schema',
   'API contract',
-  'UI/UX blueprint',
+  'Scalability guide',
   'Challenge Mode',
   'PDF Export',
   'OpenAPI YAML',
@@ -593,7 +593,7 @@ const Footer = () => (
             </span>
           </div>
           <p className="text-[#94a3b8] text-sm max-w-xs leading-relaxed">
-            AI-powered system design & UI/UX blueprint generator for modern engineering teams.
+            AI-powered system design & architecture generator for modern engineering teams.
           </p>
           <div className="flex gap-3 mt-4">
             {[Github, Twitter, Linkedin].map((Icon, i) => (
@@ -640,13 +640,287 @@ const Footer = () => (
 
 /* ─────────────────────────── Main Page ─────────────────────────── */
 
+/* ─────────────────────────── Docs Reference ─────────────────────────── */
+
+const Docs = () => {
+  const [activeTab, setActiveTab] = useState('stack')
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const vercelJsonText = `{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}`
+
+  return (
+    <section id="docs" className="py-24 px-6 bg-[#0a0a0f] border-t border-[#2a2a3d]">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold font-mono mb-4">
+            <BookOpen className="w-3.5 h-3.5" />
+            Documentation
+          </div>
+          <h2 className="font-heading text-4xl lg:text-5xl font-bold text-[#f1f5f9] mb-4">
+            Technical <GradientText>Reference</GradientText>
+          </h2>
+          <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
+            Deep dive into the architecture, application flow, artificial intelligence engine, and routing system of ArchMind.
+          </p>
+        </div>
+
+        {/* Tab Buttons */}
+        <div className="flex flex-wrap justify-center gap-2 mb-12 border-b border-[#2a2a3d] pb-4">
+          {[
+            { id: 'stack', label: 'Tech Stack', icon: Cpu },
+            { id: 'flow', label: 'System Flow', icon: Network },
+            { id: 'ai', label: 'AI Core Engine', icon: BrainCircuit },
+            { id: 'vercel', label: 'Hosting & Routing', icon: Terminal },
+          ].map((tab) => {
+            const Icon = tab.icon
+            const active = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  active
+                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/40 text-[#f1f5f9] shadow-lg shadow-blue-500/5'
+                    : 'border border-[#2a2a3d] text-[#94a3b8] hover:text-[#f1f5f9] hover:border-[#3b82f6]/30'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${active ? 'text-blue-400' : 'text-[#94a3b8]'}`} />
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Tab Content */}
+        <div className="bg-[#12121a] border border-[#2a2a3d] rounded-2xl p-6 lg:p-10 shadow-2xl relative min-h-[400px]">
+          {activeTab === 'stack' && (
+            <div className="space-y-8 animate-fadeIn">
+              <div>
+                <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">Decoupled Full-Stack Architecture</h3>
+                <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
+                  ArchMind is built using a highly decoupled architecture. The frontend handles interactive, responsive rendering, while the backend processes heavy system design prompting, authentication, and persistence, keeping operations lightning fast.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                {/* Frontend Card */}
+                <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-6 hover:border-blue-500/30 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
+                    <Code2 className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <h4 className="text-lg font-bold text-[#f1f5f9] mb-3">Frontend (Client Side)</h4>
+                  <ul className="space-y-2 text-[#94a3b8] text-xs">
+                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">React & Vite:</strong> Declarative, component-driven UI bundled for instant loading.</span></li>
+                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">React Flow:</strong> Canvas engine rendering interactive zoomable/draggable architecture flowcharts.</span></li>
+                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">Zustand:</strong> Lightweight global state managing live editor designs and sessions.</span></li>
+                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">html2pdf.js:</strong> Client-side high-fidelity vector PDF generation of active editor canvases.</span></li>
+                  </ul>
+                </div>
+
+                {/* Backend Card */}
+                <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-6 hover:border-purple-500/30 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
+                    <Server className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <h4 className="text-lg font-bold text-[#f1f5f9] mb-3">Backend (API Engine)</h4>
+                  <ul className="space-y-2 text-[#94a3b8] text-xs">
+                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">Node.js & Express:</strong> Scalable server logic handling REST endpoints, routing, and dynamic CORS.</span></li>
+                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">MongoDB & Mongoose:</strong> Clean object-relational document modeling for design persistence.</span></li>
+                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">JWT & Hashing:</strong> Secure authorization using Json Web Tokens and bcryptjs password encryption.</span></li>
+                  </ul>
+                </div>
+
+                {/* AI / cloud Card */}
+                <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-6 hover:border-cyan-500/30 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
+                    <Cpu className="w-5 h-5 text-cyan-400" />
+                  </div>
+                  <h4 className="text-lg font-bold text-[#f1f5f9] mb-3">AI Engine & Cloud</h4>
+                  <ul className="space-y-2 text-[#94a3b8] text-xs">
+                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-cyan-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">Gemini 2.5 Flash:</strong> High-speed LLM formulating structural layouts, schemas, API specifications, and stress testing.</span></li>
+                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-cyan-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">Google Generative AI SDK:</strong> Official developer SDK orchestrating reliable API streaming and context variables.</span></li>
+                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-cyan-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">Vercel SPA Hosting:</strong> High-performance static web hosting and routing rewrites.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'flow' && (
+            <div className="space-y-8 animate-fadeIn">
+              <div>
+                <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">Application Lifecycle</h3>
+                <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
+                  Every project generated inside ArchMind traverses a robust step-by-step lifecycle from client entry to visual render:
+                </p>
+              </div>
+
+              <div className="relative pl-6 border-l border-blue-500/30 space-y-6">
+                {[
+                  {
+                    num: '1',
+                    title: 'Authentication & Session initialization',
+                    desc: 'User registers or logs in. Credentials are hashed using bcryptjs. The server generates a signed JSON Web Token (JWT) cached in the browser to authorize subsequently spawned requests securely.'
+                  },
+                  {
+                    num: '2',
+                    title: 'Requirement Compiling',
+                    desc: 'The user creates a new project via the dashboard modal, specifying product goals, anticipated RPS loads, technical constraints, budget ceilings, and framework preferences.'
+                  },
+                  {
+                    num: '3',
+                    title: 'AI Blueprint Generation',
+                    desc: 'The backend securely relays constraints to Gemini 2.5 Flash under a system prompt dictating standard compliance, structure design protocols, and geometric coordinate layouts.'
+                  },
+                  {
+                    num: '4',
+                    title: 'Interactive Editor Render',
+                    desc: 'The parsed blueprint compiles on the client. The user visualizes HLD diagrams dynamically (React Flow), inspects Low-Level classes/methods, parses SQL schemas, analyzes caching layers, and stress-tests with Challenge Mode.'
+                  },
+                  {
+                    num: '5',
+                    title: 'Sharing & Vector Exports',
+                    desc: 'The user can instantly trigger client-side vector PDF downloads, copy standard OpenAPI contracts, or generate unique, shared read-only URLs to distribute live diagrams to coworkers.'
+                  }
+                ].map((step) => (
+                  <div key={step.num} className="relative">
+                    <div className="absolute -left-[35px] top-0 w-4 h-4 rounded-full bg-[#0a0a0f] border-2 border-blue-500 flex items-center justify-center">
+                      <span className="text-[7px] font-bold text-blue-400">{step.num}</span>
+                    </div>
+                    <h4 className="text-[#f1f5f9] font-bold text-base mb-1">{step.title}</h4>
+                    <p className="text-[#94a3b8] text-xs leading-relaxed max-w-3xl">{step.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'ai' && (
+            <div className="space-y-8 animate-fadeIn">
+              <div>
+                <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">How the AI Works: The Secret Sauce</h3>
+                <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
+                  ArchMind's core logic lives in the backend system prompts. Our architecture engine coordinates prompting schemas with automatic syntactical recovery models.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-5">
+                    <h4 className="text-sm font-bold text-blue-400 font-mono mb-2">A. Generator Mode (`generateDesign`)</h4>
+                    <p className="text-xs text-[#94a3b8] leading-relaxed">
+                      Instructs Gemini AI as a veteran staff system architect. The model must output strictly valid JSON conforming to an explicit schema specifying coordinate geometry. Client nodes are algorithmically anchored at top layers, microservices in the mid-tiers, and DB clusters along the bottom coordinates to ensure clean render flows.
+                    </p>
+                  </div>
+
+                  <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-5">
+                    <h4 className="text-sm font-bold text-purple-400 font-mono mb-2">B. Challenge Mode (`generateChallenge`)</h4>
+                    <p className="text-xs text-[#94a3b8] leading-relaxed">
+                      Acts as a resilience engineer stress-testing the primary blueprint. It analyzes the diagram structure to identify SPOFs (Single Points of Failure), network latency bottlenecks, and indexing inefficiencies, and provides severity-rated mitigations.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-6 flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-base font-bold text-[#f1f5f9] mb-3">C. JSON Repair Pipeline</h4>
+                    <p className="text-xs text-[#94a3b8] leading-relaxed mb-4">
+                      Large Language Models can occasionally output extraneous conversational prose or invalid markdown code fences that break native browser parsers. To prevent crashes, our server channels all AI outputs through a multi-tiered repair utility:
+                    </p>
+                    <ol className="list-decimal pl-4 text-xs text-[#94a3b8] space-y-2">
+                      <li><strong className="text-[#f1f5f9]">Direct Parse:</strong> Try native parsing first for clean outputs.</li>
+                      <li><strong className="text-[#f1f5f9]">Fence Stripping:</strong> Automatically strip ```json wrapper blocks.</li>
+                      <li><strong className="text-[#f1f5f9]">Brace Extraction:</strong> Isolate and extract content strictly between the outermost '{' and '}' braces.</li>
+                    </ol>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-[#2a2a3d] flex items-center justify-between text-[11px] text-[#94a3b8] font-mono">
+                    <span>Robust Failure Recovery</span>
+                    <span className="text-green-400 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Activated</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'vercel' && (
+            <div className="space-y-8 animate-fadeIn">
+              <div>
+                <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">Vercel SPA Routing Configuration</h3>
+                <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
+                  Because ArchMind is a client-side Single Page Application (SPA), page routing is processed locally in the browser by React Router. Standard multi-page deployments experience 404 errors when a user refreshes deep links (e.g. `/dashboard`), as the hosting provider checks for physical folder routes. We solve this elegantly by writing global server-side re-route declarations.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8 items-start">
+                <div className="space-y-4 text-xs text-[#94a3b8] leading-relaxed">
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded bg-blue-500/10 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold">1</div>
+                    <p>The web server intercepts incoming routing paths (such as sharing endpoints `/share/123` or `/dashboard`).</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded bg-purple-500/10 flex items-center justify-center flex-shrink-0 text-purple-400 font-bold">2</div>
+                    <p>Instead of throwing standard Vercel 404 errors, our rewrite instructs the edge proxy to fallback and serve `index.html` silently.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded bg-cyan-500/10 flex items-center justify-center flex-shrink-0 text-cyan-400 font-bold">3</div>
+                    <p>React Router reads the loaded address bar query client-side, dynamically rendering the dashboard modal or read-only editor flawlessly.</p>
+                  </div>
+                </div>
+
+                <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl overflow-hidden shadow-lg">
+                  <div className="bg-[#12121a] px-4 py-2 border-b border-[#2a2a3d] flex items-center justify-between">
+                    <span className="text-[10px] text-[#94a3b8] font-mono">vercel.json</span>
+                    <button
+                      onClick={() => handleCopy(vercelJsonText)}
+                      className="text-[10px] flex items-center gap-1 text-[#94a3b8] hover:text-[#f1f5f9] transition-colors"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-3 h-3 text-green-400" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          Copy
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <pre className="p-4 text-[11px] font-mono text-[#f1f5f9] overflow-x-auto leading-relaxed bg-[#0a0a0f]">
+                    {vercelJsonText}
+                  </pre>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 const Landing = () => (
-  <div className="min-h-screen bg-[#0a0a0f] text-[#f1f5f9]">
+  <div className="min-h-screen bg-[#0a0a0f] text-[#f1f5f9] scroll-smooth">
     <Navbar />
     <Hero />
     <Features />
     <HowItWorks />
     <Pricing />
+    <Docs />
     <CTABanner />
     <Footer />
   </div>

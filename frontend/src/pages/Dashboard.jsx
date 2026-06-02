@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import useDesignStore from '../store/designStore'
+import { toast } from 'react-hot-toast'
 import StatsBar from '../components/dashboard/StatsBar'
 import DesignCard from '../components/dashboard/DesignCard'
 import { ARCHITECTURE_TEMPLATES } from '../utils/templates'
@@ -206,7 +207,7 @@ const NewDesignModal = ({ onClose, onCreate }) => {
 
 /* ─────────────────────────── User Dropdown ─────────────────────────── */
 
-const UserMenu = ({ user }) => {
+const UserMenu = ({ user, onOpenProfile, onOpenSettings }) => {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const { logout } = useAuthStore()
@@ -268,11 +269,23 @@ const UserMenu = ({ user }) => {
             <p className="text-xs text-[#94a3b8] truncate">{user?.email}</p>
           </div>
           <div className="p-1.5">
-            <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#1a1a28] transition-colors">
+            <button
+              onClick={() => {
+                onOpenProfile?.()
+                setOpen(false)
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#1a1a28] transition-colors"
+            >
               <User className="w-4 h-4" />
               Profile
             </button>
-            <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#1a1a28] transition-colors">
+            <button
+              onClick={() => {
+                onOpenSettings?.()
+                setOpen(false)
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#1a1a28] transition-colors"
+            >
               <Settings className="w-4 h-4" />
               Settings
             </button>
@@ -319,6 +332,207 @@ const EmptyState = ({ onNew }) => (
   </div>
 )
 
+/* ─────────────────────────── Profile & Settings Modal ─────────────────────────── */
+
+const ProfileSettingsModal = ({ onClose, user, activeTab = 'profile', designs = [] }) => {
+  const [tab, setTab] = useState(activeTab)
+  const [autoSave, setAutoSave] = useState(true)
+  const [highPerf, setHighPerf] = useState(true)
+  const [preferModel, setPreferModel] = useState('Gemini 1.5 Flash')
+
+  const initials = user?.name
+    ? user.name
+        .split(' ')
+        .map((w) => w[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : '??'
+
+  const isPro = user?.plan === 'pro'
+  const usageCount = user?.designsGeneratedThisMonth ?? 0
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      
+      {/* Modal */}
+      <div className="relative w-full max-w-lg bg-[#12121a] border border-[#2a2a3d] rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[#2a2a3d] bg-[#12121a]/95">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setTab('profile')}
+              className={`pb-1 text-sm font-bold border-b-2 transition-all ${
+                tab === 'profile'
+                  ? 'text-blue-400 border-blue-500'
+                  : 'text-[#94a3b8] border-transparent hover:text-[#f1f5f9]'
+              }`}
+            >
+              Account Profile
+            </button>
+            <button
+              onClick={() => setTab('settings')}
+              className={`pb-1 text-sm font-bold border-b-2 transition-all ${
+                tab === 'settings'
+                  ? 'text-blue-400 border-blue-500'
+                  : 'text-[#94a3b8] border-transparent hover:text-[#f1f5f9]'
+              }`}
+            >
+              System Settings
+            </button>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg hover:bg-[#1a1a28] flex items-center justify-center text-[#94a3b8] hover:text-[#f1f5f9] transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-6 space-y-6">
+          {tab === 'profile' ? (
+            <div className="space-y-5">
+              {/* Profile Card */}
+              <div className="bg-[#1a1a28] border border-[#2a2a3d] rounded-xl p-5 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-blue-500/25">
+                  {initials}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#f1f5f9]">{user?.name || 'Ankit Kumar'}</h3>
+                  <p className="text-xs text-[#94a3b8] mt-0.5">{user?.email || 'ankitkr1841@gmail.com'}</p>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    {isPro ? (
+                      <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-[10px] font-bold flex items-center gap-0.5">
+                        <Crown className="w-3 h-3" />
+                        PRO PLAN
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-[#1a1a28] border border-[#2a2a3d] text-[#94a3b8] text-[10px]">
+                        FREE PLAN
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Usage Metrics */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[#1a1a28]/60 border border-[#2a2a3d] rounded-xl p-4">
+                  <span className="text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider block mb-1">
+                    Total Blueprints
+                  </span>
+                  <span className="text-2xl font-bold text-[#f1f5f9]">{designs?.length || 0}</span>
+                  <span className="text-[10px] text-[#4a4a6a] block mt-0.5">Designs created</span>
+                </div>
+                <div className="bg-[#1a1a28]/60 border border-[#2a2a3d] rounded-xl p-4">
+                  <span className="text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider block mb-1">
+                    AI Usage Limit
+                  </span>
+                  <span className="text-2xl font-bold text-[#f1f5f9]">
+                    {isPro ? 'Unlimited' : `${usageCount}/3`}
+                  </span>
+                  <span className="text-[10px] text-[#4a4a6a] block mt-0.5">
+                    {isPro ? 'Generations this month' : 'Free designs this month'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {/* Toggles */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between bg-[#1a1a28]/40 border border-[#2a2a3d] rounded-xl p-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#f1f5f9]">Auto-Save Blueprint Edits</h4>
+                    <p className="text-[11px] text-[#94a3b8] mt-0.5">Automatically save drag-and-drop whiteboard changes.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setAutoSave(!autoSave)
+                      toast.success(autoSave ? 'Auto-save disabled' : 'Auto-save enabled')
+                    }}
+                    className={`w-10 h-6 rounded-full p-0.5 transition-colors focus:outline-none ${
+                      autoSave ? 'bg-blue-500' : 'bg-[#2a2a3d]'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full bg-white transition-transform duration-200 ${
+                        autoSave ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between bg-[#1a1a28]/40 border border-[#2a2a3d] rounded-xl p-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#f1f5f9]">High-Performance Rendering</h4>
+                    <p className="text-[11px] text-[#94a3b8] mt-0.5">Optimize React Flow canvas operations for large diagrams.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setHighPerf(!highPerf)
+                      toast.success(highPerf ? 'High-performance mode disabled' : 'High-performance mode enabled')
+                    }}
+                    className={`w-10 h-6 rounded-full p-0.5 transition-colors focus:outline-none ${
+                      highPerf ? 'bg-blue-500' : 'bg-[#2a2a3d]'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full bg-white transition-transform duration-200 ${
+                        highPerf ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="bg-[#1a1a28]/40 border border-[#2a2a3d] rounded-xl p-4">
+                  <label className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
+                    Default AI Model Preference
+                  </label>
+                  <div className="flex gap-2">
+                    {['Gemini 1.5 Flash', 'Gemini 1.5 Pro'].map((model) => {
+                      const isSelected = preferModel === model
+                      return (
+                        <button
+                          key={model}
+                          onClick={() => {
+                            setPreferModel(model)
+                            toast.success(`Model preference set to ${model}`)
+                          }}
+                          className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                            isSelected
+                              ? 'bg-blue-500/10 border-blue-500 text-blue-400'
+                              : 'bg-[#1a1a28] border-[#2a2a3d] text-[#94a3b8] hover:border-[#4a4a6a]'
+                          }`}
+                        >
+                          {model}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end px-6 py-4 border-t border-[#2a2a3d] bg-[#12121a]/95">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition-all duration-200"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ─────────────────────────── Dashboard ─────────────────────────── */
 
 const filterOptions = [
@@ -337,6 +551,9 @@ const Dashboard = () => {
   const [showModal, setShowModal] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef(null)
+
+  const [settingsTab, setSettingsTab] = useState('profile')
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
 
   useEffect(() => {
     fetchDesigns()
@@ -399,7 +616,17 @@ const Dashboard = () => {
               ArchMind
             </span>
           </div>
-          <UserMenu user={user} />
+          <UserMenu
+            user={user}
+            onOpenProfile={() => {
+              setSettingsTab('profile')
+              setShowSettingsModal(true)
+            }}
+            onOpenSettings={() => {
+              setSettingsTab('settings')
+              setShowSettingsModal(true)
+            }}
+          />
         </div>
       </nav>
 
@@ -512,6 +739,16 @@ const Dashboard = () => {
       {/* New Design Modal */}
       {showModal && (
         <NewDesignModal onClose={() => setShowModal(false)} onCreate={handleCreate} />
+      )}
+
+      {/* Profile & Settings Modal */}
+      {showSettingsModal && (
+        <ProfileSettingsModal
+          onClose={() => setShowSettingsModal(false)}
+          user={user}
+          activeTab={settingsTab}
+          designs={designs}
+        />
       )}
     </div>
   )

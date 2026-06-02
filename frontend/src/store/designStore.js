@@ -15,7 +15,7 @@ const GENERATION_STEPS = [
   'Drafting low-level design…',
   'Defining database schemas…',
   'Specifying API contracts…',
-  'Building UI/UX blueprints…',
+  'Building Scalability guidelines…',
   'Running architecture challenge…',
   'Finalising blueprint…',
 ]

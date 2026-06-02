@@ -19,7 +19,7 @@ const GENERATION_STEPS = [
   'Designing architecture...',
   'Creating database schema...',
   'Generating API contracts...',
-  'Building UI/UX blueprints...',
+  'Building Scalability guidelines...',
   'Finalizing...',
 ]
 

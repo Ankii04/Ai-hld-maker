@@ -12,7 +12,7 @@ import {
   CheckCircle,
   Sparkles,
   Network,
-  Layout,
+  TrendingUp,
   Database,
 } from 'lucide-react'
 import useAuthStore from '../store/authStore'
@@ -22,7 +22,7 @@ import useAuthStore from '../store/authStore'
 const featureHighlights = [
   { icon: Network, text: 'HLD + LLD diagrams instantly', color: 'text-blue-400' },
   { icon: Database, text: 'Auto ER schema & migrations', color: 'text-cyan-400' },
-  { icon: Layout, text: 'Full UI/UX blueprint generation', color: 'text-purple-400' },
+  { icon: TrendingUp, text: 'Dynamic scalability strategies', color: 'text-purple-400' },
 ]
 
 const LeftPanel = () => (
@@ -82,7 +82,7 @@ const LeftPanel = () => (
               <Sparkles className="w-4 h-4 text-blue-400" />
               <span className="text-xs font-bold text-[#f1f5f9]">Free Plan — No Credit Card</span>
             </div>
-            {['3 complete designs per month', 'HLD, LLD, DB, API, UI/UX', 'Instant generation'].map((item) => (
+            {['3 complete designs per month', 'HLD, LLD, DB, API, Scalability', 'Instant generation'].map((item) => (
               <div key={item} className="flex items-center gap-2 mt-2">
                 <CheckCircle className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
                 <span className="text-xs text-[#94a3b8]">{item}</span>
