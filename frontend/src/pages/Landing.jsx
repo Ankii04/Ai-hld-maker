@@ -388,7 +388,7 @@ const steps = [
     num: '03',
     icon: Zap,
     title: 'Edit, Export, Ship',
-    desc: 'Refine any section with follow-up prompts. Export as PDF, copy OpenAPI YAML, or share a live link with your team.',
+    desc: 'Refine any section with follow-up prompts. Export as JSON, download as PDF, or share a live link with your team.',
     color: 'cyan',
   },
 ]
