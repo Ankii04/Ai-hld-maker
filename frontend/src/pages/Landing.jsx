@@ -405,8 +405,9 @@ const HowItWorks = () => (
         </p>
       </div>
       <div className="grid md:grid-cols-3 gap-8 relative">
-        {/* Connecting line */}
-        <div className="hidden md:block absolute top-12 left-[calc(16.67%+2rem)] right-[calc(16.67%+2rem)] h-px bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-cyan-500/30" />
+        {/* Connecting lines */}
+        <div className="hidden md:block absolute top-10 left-[calc(16.67%+2.5rem)] right-[calc(50%+2.5rem)] h-px bg-gradient-to-r from-blue-500/30 to-purple-500/30" />
+        <div className="hidden md:block absolute top-10 left-[calc(50%+2.5rem)] right-[calc(16.67%+2.5rem)] h-px bg-gradient-to-r from-purple-500/30 to-cyan-500/30" />
         {steps.map(({ num, icon: Icon, title, desc, color }) => {
           const c = colorMap[color]
           return (
