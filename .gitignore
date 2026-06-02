@@ -52,3 +52,7 @@ coverage/
 # Local database data files
 backend/data/
 
+# Documentation (untracked locally)
+website_documentation.md
+
+

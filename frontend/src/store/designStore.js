@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import api from '../utils/api'
 import useAuthStore from './authStore'
+import { toast } from 'react-hot-toast'
 
 /**
  * Generation step messages — shown in the UI as progress feedback
@@ -139,11 +140,19 @@ const useDesignStore = create((set, get) => ({
     set({ isGenerating: true, error: null })
     get()._startStepCycle()
 
+    const coldStartTimer = setTimeout(() => {
+      toast.loading('Standing by: The backend server is waking up. This can take up to 60 seconds...', {
+        id: 'cold-start-warning',
+      })
+    }, 6000)
+
     try {
       const data = await api.post(
         `/designs/${id}/generate`,
         inputs,
       )
+      clearTimeout(coldStartTimer)
+      toast.dismiss('cold-start-warning')
       const design = data?.data ?? data?.design ?? data
 
       get()._stopStepCycle()
@@ -164,6 +173,8 @@ const useDesignStore = create((set, get) => ({
 
       return { success: true, design }
     } catch (err) {
+      clearTimeout(coldStartTimer)
+      toast.dismiss('cold-start-warning')
       get()._stopStepCycle()
       set({ isGenerating: false, error: err.message })
       return { success: false, message: err.message }
