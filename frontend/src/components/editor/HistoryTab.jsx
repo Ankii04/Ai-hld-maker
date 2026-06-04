@@ -114,7 +114,7 @@ export default function HistoryTab({ design }) {
         <label className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider">
           Create Architectural Commit Savepoint
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={message}

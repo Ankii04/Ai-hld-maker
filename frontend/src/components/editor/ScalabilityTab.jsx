@@ -177,7 +177,7 @@ export default function ScalabilityTab({ design }) {
   return (
     <div id="scalability-tab" className="flex flex-col gap-6 p-6">
       {/* Stats row */}
-      <div className="flex gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard
           icon={Zap}
           iconColor="#3b82f6"
@@ -200,7 +200,7 @@ export default function ScalabilityTab({ design }) {
           <Layers size={15} className="text-[#06b6d4]" />
           <h3 className="text-sm font-bold text-[#f1f5f9]">Caching Layers</h3>
         </div>
-        <div className="flex gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {cacheLayers.map((layer) => (
             <CacheLayerCard key={layer.layer} {...layer} />
           ))}

@@ -23,6 +23,8 @@ import {
   Terminal,
   Copy,
   Check,
+  Menu,
+  X,
 } from 'lucide-react'
 
 /* ─────────────────────────── helpers ─────────────────────────── */
@@ -40,6 +42,7 @@ const GradientText = ({ children, className = '' }) => (
 const Navbar = () => {
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#2a2a3d] bg-[#0a0a0f]/80 backdrop-blur-xl">
@@ -67,8 +70,8 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* CTA buttons */}
-        <div className="flex items-center gap-3">
+        {/* CTA buttons (desktop) */}
+        <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
             <button
               onClick={() => navigate('/dashboard')}
@@ -93,7 +96,65 @@ const Navbar = () => {
             </>
           )}
         </div>
+
+        {/* Hamburger Menu (mobile toggle) */}
+        <div className="flex md:hidden items-center gap-3">
+          {!isAuthenticated && (
+            <button
+              onClick={() => navigate('/signup')}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-400 hover:to-purple-500 transition-all duration-200"
+            >
+              Get Started
+            </button>
+          )}
+          {isAuthenticated && (
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-400 hover:to-purple-500 transition-all duration-200"
+            >
+              Dashboard
+            </button>
+          )}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="w-9 h-9 rounded-lg border border-[#2a2a3d] flex items-center justify-center text-[#94a3b8] hover:text-[#f1f5f9]"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Menu Panel */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-[#2a2a3d] bg-[#0a0a0f]/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-4 animate-fade-in">
+          {['Features', 'Pricing', 'Docs'].map((link) => (
+            <a
+              key={link}
+              href={`#${link.toLowerCase()}`}
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-[#94a3b8] hover:text-[#f1f5f9] text-base font-medium py-2 border-b border-[#2a2a3d]/30"
+            >
+              {link}
+            </a>
+          ))}
+          {!isAuthenticated && (
+            <div className="flex items-center gap-4 pt-2">
+              <button
+                onClick={() => { setMobileMenuOpen(false); navigate('/login') }}
+                className="flex-1 py-2.5 text-center text-sm font-medium border border-[#2a2a3d] rounded-lg text-[#94a3b8] hover:text-[#f1f5f9]"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setMobileMenuOpen(false); navigate('/signup') }}
+                className="flex-1 py-2.5 text-center text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+              >
+                Get Started
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </nav>
   )
 }
@@ -222,7 +283,7 @@ const Hero = () => {
             <Sparkles className="w-3 h-3" />
             AI-Powered System Design
           </div>
-          <h1 className="font-heading text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight text-[#f1f5f9] mb-6">
+          <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight text-[#f1f5f9] mb-6">
             Turn Ideas Into{' '}
             <GradientText>Complete System Architectures</GradientText>
           </h1>

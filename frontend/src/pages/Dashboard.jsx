@@ -97,9 +97,9 @@ const NewDesignModal = ({ onClose, onCreate }) => {
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       {/* Modal */}
-      <div className="relative w-full max-w-2xl bg-[#12121a] border border-[#2a2a3d] rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
+      <div className="relative w-full max-w-2xl max-h-[90vh] bg-[#12121a] border border-[#2a2a3d] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-fade-in">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[#2a2a3d] bg-[#12121a]/95">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[#2a2a3d] bg-[#12121a]/95 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-blue-400" />
@@ -115,7 +115,7 @@ const NewDesignModal = ({ onClose, onCreate }) => {
         </div>
 
         {/* Body */}
-        <div className="px-6 py-6 space-y-6">
+        <div className="px-6 py-6 space-y-6 overflow-y-auto flex-1">
           <div>
             <label className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
               Project Title / Product Name
@@ -175,7 +175,7 @@ const NewDesignModal = ({ onClose, onCreate }) => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2a2a3d] bg-[#12121a]/95">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2a2a3d] bg-[#12121a]/95 flex-shrink-0">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#1a1a28] transition-colors"

@@ -19,7 +19,7 @@ export default function TabBar({
   return (
     <div className="flex items-center justify-between border-b border-[#2a2a3d] bg-[#12121a] px-4 min-h-[48px] flex-shrink-0">
       {/* Tabs */}
-      <div className="flex items-end h-full gap-0">
+      <div className="flex items-end h-full gap-0 overflow-x-auto no-scrollbar flex-1 min-w-0">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id
           return (

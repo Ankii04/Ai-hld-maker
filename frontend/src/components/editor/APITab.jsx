@@ -76,7 +76,7 @@ function EndpointItem({ endpoint }) {
 
       {/* Expanded detail */}
       {open && (
-        <div className="border-t border-[#2a2a3d] grid grid-cols-1 md:grid-cols-2 gap-0 divide-x divide-[#2a2a3d]">
+        <div className="border-t border-[#2a2a3d] grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-[#2a2a3d]">
           {/* Request Body */}
           <div className="p-4">
             <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider mb-2">

@@ -176,11 +176,11 @@ const ExportDropdown = ({ currentDesign, activeTab, onUpgradeClick, isPro }) => 
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#2a2a3d] text-[#94a3b8] hover:text-[#f1f5f9] hover:border-blue-500/30 text-sm font-medium transition-all duration-200"
+        className="flex items-center justify-center gap-1.5 px-2.5 sm:px-4 py-2 rounded-lg border border-[#2a2a3d] text-[#94a3b8] hover:text-[#f1f5f9] hover:border-blue-500/30 text-sm font-medium transition-all duration-200"
       >
-        <Download className="w-4 h-4" />
-        Export
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <Download className="w-4 h-4 flex-shrink-0" />
+        <span className="hidden sm:inline">Export</span>
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform flex-shrink-0 ${open ? 'rotate-180' : 'hidden sm:inline'}`} />
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-2 w-52 bg-[#12121a] border border-[#2a2a3d] rounded-xl shadow-2xl z-30 overflow-hidden p-1.5">
@@ -254,7 +254,7 @@ const EditableTitle = ({ value, onChange, onBlur }) => {
       onClick={startEdit}
       className="group flex items-center gap-1.5 hover:bg-[#1a1a28] px-3 py-1 rounded-lg transition-colors"
     >
-      <span className="font-heading font-semibold text-base text-[#f1f5f9] truncate max-w-[200px] lg:max-w-xs">
+      <span className="font-heading font-semibold text-base text-[#f1f5f9] truncate max-w-[100px] sm:max-w-[200px] lg:max-w-xs">
         {value || 'Untitled Design'}
       </span>
       <Pencil className="w-3.5 h-3.5 text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -325,7 +325,7 @@ const Editor = () => {
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [saveStatus, setSaveStatus] = useState(null) // 'saving' | 'saved' | 'error' | null
   const [activeTab, setActiveTab] = useState('hld')
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024)
   const saveStatusTimeout = useRef(null)
 
   /* load design */
@@ -478,13 +478,13 @@ const Editor = () => {
             </button>
 
             {/* Logo */}
-            <div className="flex items-center gap-1.5 mr-2">
+            <div className="hidden md:flex items-center gap-1.5 mr-2">
               <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
                 <BrainCircuit className="w-3.5 h-3.5 text-white" />
               </div>
             </div>
 
-            <div className="w-px h-4 bg-[#2a2a3d]" />
+            <div className="hidden md:block w-px h-4 bg-[#2a2a3d]" />
 
             {/* Editable title */}
             <div className="min-w-0 ml-2">
@@ -548,8 +548,23 @@ const Editor = () => {
         <LoadingScreen />
       ) : (
         <div className="flex flex-1 min-h-0">
+          {/* Mobile Sidebar Backdrop */}
+          {isSidebarOpen && (
+            <div 
+              className="lg:hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-sm animate-fade-in" 
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+
           {/* Left: Requirements Panel */}
-          <aside className={`transition-all duration-300 ease-in-out flex-shrink-0 border-r border-[#2a2a3d] flex flex-col min-h-0 bg-[#0d0d15] ${isSidebarOpen ? 'w-80 opacity-100' : 'w-0 opacity-0 overflow-hidden !border-r-0'}`}>
+          <aside className={`transition-all duration-300 ease-in-out flex-shrink-0 flex flex-col min-h-0 bg-[#0d0d15] border-[#2a2a3d] z-40 
+            lg:relative lg:translate-x-0 lg:opacity-100 lg:border-r
+            fixed inset-y-0 left-0 shadow-2xl lg:shadow-none
+            ${isSidebarOpen 
+              ? 'w-80 translate-x-0 opacity-100 border-r' 
+              : 'w-80 lg:w-0 -translate-x-full lg:translate-x-0 opacity-0 lg:opacity-0 overflow-hidden lg:border-r-0 border-r-0'
+            }`}
+          >
             <div className="w-80 flex flex-col flex-1 min-h-0">
               <RequirementsPanel
                 currentDesign={currentDesign}

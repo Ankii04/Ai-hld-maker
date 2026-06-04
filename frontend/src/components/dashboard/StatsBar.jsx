@@ -45,7 +45,7 @@ export default function StatsBar({ designs = [], user }) {
   const isPro = user?.plan === 'pro'
 
   return (
-    <div className="flex gap-4 flex-wrap">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
         icon={LayoutDashboard}
         iconColor="#3b82f6"

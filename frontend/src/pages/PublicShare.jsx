@@ -69,8 +69,8 @@ export default function PublicShare({ shareId: propShareId, readOnly }) {
             <span className="font-bold font-heading bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               ArchMind
             </span>
-            <span className="text-[#4a5568] text-sm">/</span>
-            <span className="text-[#94a3b8] text-sm truncate max-w-[200px]">{design?.title}</span>
+            <span className="hidden sm:inline text-[#4a5568] text-sm">/</span>
+            <span className="hidden sm:inline text-[#94a3b8] text-sm truncate max-w-[200px]">{design?.title}</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1a1a28] border border-[#2a2a3d]">
             <Eye size={14} className="text-[#94a3b8]" />
@@ -81,12 +81,12 @@ export default function PublicShare({ shareId: propShareId, readOnly }) {
 
       {/* Tab Bar */}
       <div className="border-b border-[#2a2a3d] bg-[#0a0a0f]">
-        <div className="max-w-screen-xl mx-auto px-6 flex gap-1">
+        <div className="max-w-screen-xl mx-auto px-6 flex gap-1 overflow-x-auto no-scrollbar flex-nowrap">
           {TABS.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-4 text-sm font-medium transition-all border-b-2 ${
+              className={`px-4 py-4 text-sm font-medium transition-all border-b-2 whitespace-nowrap ${
                 activeTab === tab
                   ? 'text-[#3b82f6] border-[#3b82f6]'
                   : 'text-[#94a3b8] border-transparent hover:text-[#f1f5f9]'

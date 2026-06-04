@@ -194,7 +194,7 @@ export default function DatabaseTab({ design }) {
   return (
     <div id="database-tab" className="flex flex-col gap-6 p-6">
       {/* Header row */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-[#f1f5f9]">Database Schema & DDL</h2>
           <p className="text-xs text-[#94a3b8] mt-0.5">
