@@ -1,5 +1,6 @@
 import React from 'react'
-import { getSmoothStepPath } from '@xyflow/react'
+import { getSmoothStepPath, EdgeLabelRenderer } from '@xyflow/react'
+
 
 export default function SimulationEdge({
   id,
@@ -13,7 +14,7 @@ export default function SimulationEdge({
   markerEnd,
   data = {},
 }) {
-  const [edgePath] = getSmoothStepPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -117,6 +118,25 @@ export default function SimulationEdge({
             calcMode="linear"
           />
         </circle>
+      )}
+      {/* Dynamic Edge Payload Text Badge */}
+      {data.payload && (state === 'walkthrough-forward' || state === 'walkthrough-backward') && (
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: 'all',
+            }}
+            className={`px-2.5 py-1 rounded-lg border text-[9px] font-bold font-mono shadow-2xl backdrop-blur-md whitespace-nowrap z-[999] animate-fade-in transition-all duration-300 ${
+              state === 'walkthrough-forward'
+                ? 'bg-[#12121a]/95 border-purple-500/50 text-[#c084fc] shadow-purple-900/10'
+                : 'bg-[#12121a]/95 border-green-500/50 text-green-400 shadow-green-900/10'
+            }`}
+          >
+            {data.payload}
+          </div>
+        </EdgeLabelRenderer>
       )}
     </>
   )

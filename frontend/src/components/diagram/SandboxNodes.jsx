@@ -71,7 +71,7 @@ function SandboxNodeShell({
 
   return (
     <div
-      className={`relative rounded-2xl min-w-[170px] max-w-[230px] border transition-all duration-300 bg-gradient-to-br ${bgGradient} overflow-hidden shadow-xl`}
+      className={`relative rounded-2xl min-w-[170px] max-w-[230px] border transition-all duration-300 bg-gradient-to-br ${bgGradient} overflow-hidden shadow-xl ${telemetry.successRipple ? 'completion-ripple' : ''}`}
       style={{
         borderColor: selected ? glowColor : borderColor,
         boxShadow: selected

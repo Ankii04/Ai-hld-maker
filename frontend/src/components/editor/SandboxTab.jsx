@@ -172,6 +172,109 @@ function buildWalkthroughPath(nodes, edges) {
   return { pathNodes, pathEdges };
 }
 
+/* ─── Traversal Payload Helper ────────────────────────────────────────────── */
+const getStepPayloadAndData = (node, direction) => {
+  const label = node.data?.label || node.id
+  if (direction === 'forward') {
+    switch(node.type) {
+      case 'client':
+        return {
+          payload: 'HTTP Request',
+          inspectData: `GET /api/v1/profile HTTP/1.1\nHost: smartpark.ai\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\nAccept: application/json`
+        }
+      case 'cdn':
+        return {
+          payload: 'CDN Cache Check',
+          inspectData: `CDN Lookup:\n- URI: /api/v1/profile\n- Target Host: CDN Edge Node #412\n- Status: CACHE_MISS (Querying Origin Server)`
+        }
+      case 'lb':
+        return {
+          payload: 'Route Request',
+          inspectData: `Load Balancer Routing:\n- Method: Round-Robin\n- Target Node: ${label}\n- Protocol: HTTP/2 (TLS v1.3)`
+        }
+      case 'gateway':
+        return {
+          payload: 'Auth & Rate-Limit',
+          inspectData: `API Gateway Ingress Policies:\n- Decoding JWT: Success\n- Rate Limit Check: 14/60 req/min\n- Client IP: 198.51.100.42`
+        }
+      case 'service':
+        return {
+          payload: 'Execute Service API',
+          inspectData: `Microservice [${label}] Controller:\n- Class: UserProfileController\n- Method: fetchActiveProfile()\n- Query Param: { userId: 1042 }`
+        }
+      case 'database':
+        return {
+          payload: 'Execute SQL Query',
+          inspectData: `SELECT u.id, u.email, p.bio \nFROM users u \nJOIN profiles p ON u.id = p.user_id \nWHERE u.id = 1042 \nLIMIT 1;\n-- Executing primary index scan on users(id)...`
+        }
+      case 'cache':
+        return {
+          payload: 'Redis GET',
+          inspectData: `Redis cache command:\nGET cache:session:1042\n-- Cache Miss. Querying backend database...`
+        }
+      case 'queue':
+        return {
+          payload: 'Dispatch Event',
+          inspectData: `Kafka Broker:\n- Publish Topic: user-profile-accessed\n- Partition: 1\n- Payload: { "userId": 1042, "time": 1719582650 }`
+        }
+      default:
+        return {
+          payload: 'Ingress Packet',
+          inspectData: `Forward packet reaching node: ${label}`
+        }
+    }
+  } else {
+    // backward/response
+    switch(node.type) {
+      case 'client':
+        return {
+          payload: 'Render 200 OK',
+          inspectData: `HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: 175\n\n{\n  "status": "success",\n  "data": {\n    "id": 1042,\n    "email": "user@smartpark.ai",\n    "bio": "Active system user profile."\n  }\n}`
+        }
+      case 'cdn':
+        return {
+          payload: 'Write Edge Cache',
+          inspectData: `CDN Cache Write:\n- URI: /api/v1/profile\n- TTL: 300s\n- Status: OK (Edge Cache Updated)`
+        }
+      case 'lb':
+        return {
+          payload: 'Egress Forwarding',
+          inspectData: `Load Balancer Egress Response:\n- Protocol: HTTPS/TLSv1.3\n- Response Size: 340 bytes`
+        }
+      case 'gateway':
+        return {
+          payload: 'Append CORS Headers',
+          inspectData: `API Gateway Response Egress:\n- Status: 200 OK\n- CORS Policies Applied: Access-Control-Allow-Origin: *\n- Duration: 14.8ms`
+        }
+      case 'service':
+        return {
+          payload: 'Format API JSON',
+          inspectData: `Service [${label}] Response Builder:\n- JSON Payload Formatted:\n{\n  "status": "success",\n  "data": { "id": 1042, "email": "user@smartpark.ai" }\n}`
+        }
+      case 'database':
+        return {
+          payload: 'Query Rows Result',
+          inspectData: `PostgreSQL Database Response:\n- Status: SELECT 1\n- Duration: 2.1ms\n- Row Result: { "id": 1042, "email": "user@smartpark.ai" }`
+        }
+      case 'cache':
+        return {
+          payload: 'Cache HIT Payload',
+          inspectData: `Redis Cache Response:\n- Status: HIT\n- TTL: 120s\n- Payload: { "userId": 1042, "cached": true }`
+        }
+      case 'queue':
+        return {
+          payload: 'Broker ACK',
+          inspectData: `Kafka Consumer ACK:\n- Topic Offset: 15982\n- Status: Committed`
+        }
+      default:
+        return {
+          payload: 'Egress Packet',
+          inspectData: `Response returning from node: ${label}`
+        }
+    }
+  }
+}
+
 /* ─── Walkthrough Steps Assembler ────────────────────────────────────────── */
 const buildWalkthroughSteps = (pathNodes, pathEdges) => {
   if (pathNodes.length === 0) return []
@@ -206,23 +309,28 @@ const buildWalkthroughSteps = (pathNodes, pathEdges) => {
   }
 
   // Step 1: Client start
+  const clientStartData = getStepPayloadAndData(pathNodes[0], 'forward')
   steps.push({
     type: 'node',
     targetId: pathNodes[0].id,
     message: 'Client initiates connection (HTTP request)',
-    telemetry: { walkthroughMessage: 'Sending HTTP Request...', status: 'normal', utilization: 25 }
+    telemetry: { walkthroughMessage: 'Sending HTTP Request...', status: 'normal', utilization: 25 },
+    inspectData: clientStartData.inspectData
   })
 
   // Forward steps
   for (let i = 0; i < pathEdges.length; i++) {
     const edge = pathEdges[i]
     const nextNode = pathNodes[i + 1]
+    const edgeData = getStepPayloadAndData(nextNode, 'forward')
 
     steps.push({
       type: 'edge',
       targetId: edge.id,
       direction: 'forward',
-      message: `Data packets moving along edge: from ${pathNodes[i].data?.label || pathNodes[i].id} to ${nextNode.data?.label || nextNode.id}`,
+      message: `Request traveling from ${pathNodes[i].data?.label || pathNodes[i].id} to ${nextNode.data?.label || nextNode.id}`,
+      payload: edgeData.payload,
+      inspectData: `Edge Packet Transmission:\n- Source: ${pathNodes[i].data?.label || pathNodes[i].id}\n- Target: ${nextNode.data?.label || nextNode.id}\n- Payload Type: ${edgeData.payload}`
     })
 
     steps.push({
@@ -233,7 +341,8 @@ const buildWalkthroughSteps = (pathNodes, pathEdges) => {
         walkthroughMessage: getFwdMsg(nextNode),
         status: nextNode.type === 'database' || nextNode.type === 'cache' ? 'normal' : 'warning',
         utilization: 70
-      }
+      },
+      inspectData: edgeData.inspectData
     })
   }
 
@@ -241,12 +350,15 @@ const buildWalkthroughSteps = (pathNodes, pathEdges) => {
   for (let i = pathEdges.length - 1; i >= 0; i--) {
     const edge = pathEdges[i]
     const prevNode = pathNodes[i]
+    const edgeData = getStepPayloadAndData(prevNode, 'backward')
 
     steps.push({
       type: 'edge',
       targetId: edge.id,
       direction: 'backward',
-      message: `Data packets returning back: from ${pathEdges[i].target} to ${prevNode.data?.label || prevNode.id}`,
+      message: `Response returning back from ${pathEdges[i].target} to ${prevNode.data?.label || prevNode.id}`,
+      payload: edgeData.payload,
+      inspectData: `Edge Packet Response Transmission:\n- Source: ${pathEdges[i].target}\n- Target: ${prevNode.data?.label || prevNode.id}\n- Response Payload: ${edgeData.payload}`
     })
 
     steps.push({
@@ -257,7 +369,8 @@ const buildWalkthroughSteps = (pathNodes, pathEdges) => {
         walkthroughMessage: getBwdMsg(prevNode),
         status: 'normal',
         utilization: 45
-      }
+      },
+      inspectData: edgeData.inspectData
     })
   }
 
@@ -496,7 +609,6 @@ export default function SandboxTab({ design }) {
   // Walkthrough step advancement handler
   const triggerWalkthroughStep = useCallback((stepIdx) => {
     if (stepIdx === null || stepIdx < 0 || stepIdx >= walkthroughSteps.length) {
-      // Clear walkthrough overlays
       setNodes(convertToSandboxNodes(blueprintNodes))
       setEdges(convertToSimulationEdges(blueprintEdges))
       return
@@ -505,12 +617,23 @@ export default function SandboxTab({ design }) {
     const step = walkthroughSteps[stepIdx]
     addLog(step.message, step.type === 'edge' ? 'info' : 'success')
 
-    // Update nodes with walkthrough tooltips and highlight statuses
+    const activeNodeId = step.type === 'node' ? step.targetId : null
+    const activeEdgeId = step.type === 'edge' ? step.targetId : null
+    const isFinalStep = stepIdx === walkthroughSteps.length - 1
+
+    // Update nodes with walkthrough tooltips, dimming, and success ripple
     setNodes((nds) =>
       nds.map((n) => {
         const isTarget = n.id === step.targetId
+        const isActiveNode = n.id === activeNodeId
+        
+        // Active path dimming logic
+        const isNodeInPath = walkthroughData.pathNodes.some(pn => pn.id === n.id)
+        const opacity = isActiveNode ? 1 : isNodeInPath ? 0.65 : 0.25
+
         return {
           ...n,
+          style: { opacity, transition: 'opacity 0.3s' },
           data: {
             ...n.data,
             telemetry: {
@@ -518,29 +641,39 @@ export default function SandboxTab({ design }) {
               walkthroughMessage: isTarget && step.type === 'node' ? step.telemetry.walkthroughMessage : null,
               status: isTarget && step.type === 'node' ? step.telemetry.status : 'normal',
               utilization: isTarget && step.type === 'node' ? step.telemetry.utilization : 0,
+              successRipple: isFinalStep && n.id === walkthroughData.pathNodes[0]?.id,
             },
           },
         }
       })
     )
 
-    // Update edges with individual request pulse coordinates
+    // Update edges with packet coordinate pulses, dimming, and text payloads
     setEdges((eds) =>
       eds.map((e) => {
         const isTarget = e.id === step.targetId
+        const isActiveEdge = e.id === activeEdgeId
         const activeState = isTarget && step.type === 'edge' ? `walkthrough-${step.direction}` : 'idle'
+
+        // Active path dimming logic
+        const isEdgeInPath = walkthroughData.pathEdges.some(pe => pe.id === e.id)
+        const opacity = isActiveEdge ? 1 : isEdgeInPath ? 0.5 : 0.15
+
+        let pColor = '#a855f7' // purple educational packets
+
         return {
           ...e,
+          style: {
+            stroke: activeState !== 'idle' ? pColor : '#2a2a3d',
+            strokeWidth: activeState !== 'idle' ? 2 : 1.5,
+            opacity,
+            transition: 'stroke 0.3s, opacity 0.3s',
+          },
           data: {
-            ...e.data,
             state: activeState,
             speed: walkthroughSpeed === 800 ? 2 : walkthroughSpeed === 2500 ? 0.5 : 1,
-            packetColor: '#a855f7', // purple educational packets
-          },
-          style: {
-            stroke: activeState !== 'idle' ? '#a855f7' : '#2a2a3d',
-            strokeWidth: activeState !== 'idle' ? 2 : 1.5,
-            transition: 'stroke 0.3s',
+            packetColor: pColor,
+            payload: isTarget && step.type === 'edge' ? step.payload : null,
           },
         }
       })
@@ -1212,6 +1345,18 @@ export default function SandboxTab({ design }) {
                         style={{ width: `${((walkthroughStep + 1) / walkthroughSteps.length) * 100}%` }}
                       />
                     </div>
+
+                    {/* Syntax Highlighted Payload/SQL Telemetry Drawer */}
+                    {walkthroughSteps[walkthroughStep].inspectData && (
+                      <div className="mt-4 pt-3 border-t border-[#2a2a3d]/40">
+                        <div className="text-[9px] text-[#4a4a6a] font-bold uppercase tracking-wider mb-2 font-sans">
+                          Payload / Query Telemetry
+                        </div>
+                        <pre className="p-2.5 rounded-lg bg-black/60 border border-[#2a2a3d]/45 font-mono text-[9px] leading-relaxed text-[#c084fc] overflow-x-auto whitespace-pre select-text max-h-[160px] custom-scrollbar shadow-inner">
+                          {walkthroughSteps[walkthroughStep].inspectData}
+                        </pre>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <p className="text-[#94a3b8] italic">Click "Send Request" to trace the path and view explanation cards.</p>
