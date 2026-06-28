@@ -866,9 +866,19 @@
 
 .react-flow__edge-path,
 .xyflow__edge-path {
-  stroke: #3b82f6 !important;
-  stroke-width: 2px !important;
-  opacity: 0.85 !important;
-  fill: none !important;
+  stroke: #3b82f6;
+  stroke-width: 2px;
+  opacity: 0.85;
+  fill: none;
 }
+
+/* ============================================================
+   Custom Sandbox Edge Pulse Keyframes
+   ============================================================ */
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
 

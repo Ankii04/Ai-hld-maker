@@ -6,6 +6,7 @@ const TABS = [
   { id: 'database', label: 'Database' },
   { id: 'apis', label: 'APIs' },
   { id: 'scalability', label: 'Scalability' },
+  { id: 'sandbox', label: 'Sandbox 🧪' },
   { id: 'challenge', label: 'Challenge 🔥' },
   { id: 'history', label: 'History 🕒' },
 ]

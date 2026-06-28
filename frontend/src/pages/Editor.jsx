@@ -32,6 +32,8 @@ import APITab from '../components/editor/APITab'
 import ScalabilityTab from '../components/editor/ScalabilityTab'
 import ChallengeTab from '../components/editor/ChallengeTab'
 import HistoryTab from '../components/editor/HistoryTab'
+import SandboxTab from '../components/editor/SandboxTab'
+
 
 /* ─────────────────────────── Upgrade Modal ─────────────────────────── */
 
@@ -612,9 +614,13 @@ const Editor = () => {
                       user={user}
                     />
                   )}
+                   {activeTab === 'sandbox' && (
+                    <SandboxTab design={currentDesign} />
+                  )}
                   {activeTab === 'history' && (
                     <HistoryTab design={currentDesign} />
                   )}
+
                 </div>
               </>
             ) : (
