@@ -79,6 +79,14 @@ function SandboxNodeShell({
           : `0 4px 24px rgba(0,0,0,0.5), ${status !== 'normal' ? `0 0 10px ${glowColor}15` : 'none'}`,
       }}
     >
+      {/* Floating Walkthrough Tooltip */}
+      {telemetry.walkthroughMessage && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 w-44 bg-gradient-to-r from-blue-600 to-purple-600 border border-blue-400 text-white rounded-lg p-2 text-[9px] leading-normal shadow-2xl z-[999] text-center animate-bounce">
+          <div className="font-bold uppercase tracking-wider mb-0.5 text-[7px] text-blue-200">Active Action</div>
+          {telemetry.walkthroughMessage}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-purple-600" />
+        </div>
+      )}
       {/* Target Handle */}
       <Handle
         type="target"

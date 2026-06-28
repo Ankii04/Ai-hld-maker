@@ -881,4 +881,16 @@
   }
 }
 
+/* ============================================================
+   Canvas Fullscreen Element Styles
+   ============================================================ */
+:fullscreen,
+:-webkit-full-screen,
+:-ms-fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: #0a0a0f !important;
+}
+
+
 

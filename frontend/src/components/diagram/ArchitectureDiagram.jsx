@@ -27,6 +27,8 @@ import {
   Save,
   LayoutGrid,
   Plus,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
 import dagre from 'dagre'
 
@@ -246,18 +248,35 @@ export default function ArchitectureDiagram({
 
   const toggleFullscreen = useCallback(() => {
     if (!reactFlowWrapper.current) return
-    if (!document.fullscreenElement) {
-      reactFlowWrapper.current.requestFullscreen().catch((err) => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`)
-      })
+    const el = reactFlowWrapper.current
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+      if (el.requestFullscreen) {
+        el.requestFullscreen().catch((err) => console.error(err))
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen()
+      } else if (el.msRequestFullscreen) {
+        el.msRequestFullscreen()
+      }
     } else {
-      document.exitFullscreen()
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen()
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen()
+      }
     }
   }, [])
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
+      setIsFullscreen(
+        !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement
+        )
+      )
       setTimeout(() => {
         if (reactFlowInstance) {
           reactFlowInstance.fitView({ padding: 0.2, duration: 250 })
@@ -265,8 +284,12 @@ export default function ArchitectureDiagram({
       }, 150)
     }
     document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('msfullscreenchange', handleFullscreenChange)
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange)
     }
   }, [reactFlowInstance])
 
@@ -491,7 +514,6 @@ export default function ArchitectureDiagram({
             overflow: 'hidden',
           }}
           showInteractive={false}
-          onFitView={toggleFullscreen}
         />
         <MiniMap
           style={{
@@ -527,6 +549,18 @@ export default function ArchitectureDiagram({
               >
                 <LayoutGrid size={14} />
                 <span className="text-[9px] font-semibold leading-none">Layout</span>
+              </button>
+
+              {/* Fullscreen Button */}
+              <button
+                onClick={toggleFullscreen}
+                title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                className="flex flex-col items-center gap-1 px-2.5 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/15 active:scale-95 transition-all min-w-[44px]"
+              >
+                {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                <span className="text-[9px] font-semibold leading-none">
+                  {isFullscreen ? 'Exit' : 'Full'}
+                </span>
               </button>
               
               <div className="w-px h-6 bg-[#2a2a3d]" />

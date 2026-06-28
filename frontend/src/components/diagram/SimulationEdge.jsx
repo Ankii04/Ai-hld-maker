@@ -30,7 +30,7 @@ export default function SimulationEdge({
   let strokeColor = '#2a2a3d'
   let flowStroke = '#3b82f6'
   
-  if (state === 'running') {
+  if (state === 'running' || state === 'walkthrough-forward' || state === 'walkthrough-backward') {
     strokeColor = '#1e293b'
     flowStroke = packetColor
   } else if (state === 'warning') {
@@ -75,8 +75,8 @@ export default function SimulationEdge({
         markerEnd={markerEnd}
       />
 
-      {/* Dynamic flowing packet dashes */}
-      {state !== 'idle' && state !== 'dead' && (
+      {/* Dynamic flowing packet dashes for continuous load */}
+      {state === 'running' && (
         <path
           d={edgePath}
           fill="none"
@@ -90,6 +90,33 @@ export default function SimulationEdge({
             filter: `drop-shadow(0 0 3px ${flowStroke})`,
           }}
         />
+      )}
+
+      {/* Single packet animation for walkthrough forward */}
+      {state === 'walkthrough-forward' && (
+        <circle r="5" fill={flowStroke} style={{ filter: `drop-shadow(0 0 4px ${flowStroke})` }}>
+          <animateMotion
+            dur={`${duration}s`}
+            repeatCount="1"
+            fill="freeze"
+            path={edgePath}
+          />
+        </circle>
+      )}
+
+      {/* Single packet animation for walkthrough backward */}
+      {state === 'walkthrough-backward' && (
+        <circle r="5" fill={flowStroke} style={{ filter: `drop-shadow(0 0 4px ${flowStroke})` }}>
+          <animateMotion
+            dur={`${duration}s`}
+            repeatCount="1"
+            fill="freeze"
+            path={edgePath}
+            keyPoints="1;0"
+            keyTimes="0;1"
+            calcMode="linear"
+          />
+        </circle>
       )}
     </>
   )
