@@ -37,10 +37,10 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   dagreGraph.setDefaultEdgeLabel(() => ({}))
   
   const isHorizontal = direction === 'LR'
-  dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 80 })
+  dagreGraph.setGraph({ rankdir: direction, ranksep: 75, nodesep: 55 })
 
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 240, height: 160 })
+    dagreGraph.setNode(node.id, { width: 230, height: 135 })
   })
 
   edges.forEach((edge) => {
@@ -56,8 +56,8 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
       targetPosition: isHorizontal ? 'left' : 'top',
       sourcePosition: isHorizontal ? 'right' : 'bottom',
       position: {
-        x: nodeWithPosition.x - 120,
-        y: nodeWithPosition.y - 80,
+        x: nodeWithPosition.x - 115,
+        y: nodeWithPosition.y - 67.5,
       },
     }
   })
@@ -299,8 +299,8 @@ export default function ArchitectureDiagram({
     const apiEdges = convertApiEdges(propEdges)
     
     const hasOverlaps = (nodesList) => {
-      const width = 240
-      const height = 150
+      const width = 230
+      const height = 130
       for (let i = 0; i < nodesList.length; i++) {
         for (let j = i + 1; j < nodesList.length; j++) {
           const n1 = nodesList[i]

@@ -383,10 +383,10 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   dagreGraph.setDefaultEdgeLabel(() => ({}))
   
   const isHorizontal = direction === 'LR'
-  dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 80 })
+  dagreGraph.setGraph({ rankdir: direction, ranksep: 75, nodesep: 55 })
 
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 240, height: 160 })
+    dagreGraph.setNode(node.id, { width: 230, height: 135 })
   })
 
   edges.forEach((edge) => {
@@ -402,8 +402,8 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
       targetPosition: isHorizontal ? 'left' : 'top',
       sourcePosition: isHorizontal ? 'right' : 'bottom',
       position: {
-        x: nodeWithPosition.x - 120,
-        y: nodeWithPosition.y - 80,
+        x: nodeWithPosition.x - 115,
+        y: nodeWithPosition.y - 67.5,
       },
     }
   })
@@ -412,8 +412,8 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 }
 
 const hasOverlaps = (nodesList) => {
-  const width = 240
-  const height = 150
+  const width = 230
+  const height = 130
   for (let i = 0; i < nodesList.length; i++) {
     for (let j = i + 1; j < nodesList.length; j++) {
       const n1 = nodesList[i]
@@ -1026,7 +1026,7 @@ export default function SandboxTab({ design }) {
     <div
       ref={reactFlowWrapper}
       id="sandbox-tab"
-      className="relative flex flex-col md:flex-row h-[750px] bg-[#0a0a0f] border border-[#2a2a3d] rounded-2xl overflow-hidden"
+      className="relative flex flex-col md:flex-row h-[calc(100vh-140px)] min-h-[600px] bg-[#0a0a0f] border border-[#2a2a3d] rounded-2xl overflow-hidden"
     >
       
       {/* ─── LEFT PANEL: Flow Whiteboard (70% width) ─── */}
@@ -1087,6 +1087,8 @@ export default function SandboxTab({ design }) {
             nodesDraggable={true}
             nodesConnectable={false}
             elementsSelectable={true}
+            minZoom={0.05}
+            maxZoom={4}
             proOptions={{ hideAttribution: true }}
           >
             <Background color="#161622" gap={20} size={1.2} />

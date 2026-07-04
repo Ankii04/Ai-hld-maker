@@ -911,6 +911,21 @@
   }
 }
 
+/* ============================================================
+   Controls Clickability Overrides
+   ============================================================ */
+.react-flow__controls,
+.xyflow__controls {
+  z-index: 50 !important;
+  pointer-events: all !important;
+}
+
+.react-flow__controls-button,
+.xyflow__controls-button {
+  pointer-events: all !important;
+}
+
+
 
 
 
