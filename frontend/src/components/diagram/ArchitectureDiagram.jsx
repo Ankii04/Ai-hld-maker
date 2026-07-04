@@ -37,10 +37,10 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   dagreGraph.setDefaultEdgeLabel(() => ({}))
   
   const isHorizontal = direction === 'LR'
-  dagreGraph.setGraph({ rankdir: direction, ranksep: 80, nodesep: 50 })
+  dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 80 })
 
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 220, height: 100 })
+    dagreGraph.setNode(node.id, { width: 240, height: 160 })
   })
 
   edges.forEach((edge) => {
@@ -56,8 +56,8 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
       targetPosition: isHorizontal ? 'left' : 'top',
       sourcePosition: isHorizontal ? 'right' : 'bottom',
       position: {
-        x: nodeWithPosition.x - 110,
-        y: nodeWithPosition.y - 50,
+        x: nodeWithPosition.x - 120,
+        y: nodeWithPosition.y - 80,
       },
     }
   })
@@ -298,8 +298,31 @@ export default function ArchitectureDiagram({
     const apiNodes = convertApiNodes(propNodes)
     const apiEdges = convertApiEdges(propEdges)
     
-    // Auto-layout on initial generation if they are unpositioned
-    const needsLayout = propNodes.length > 0 && propNodes.some(n => !n.position || (n.position.x === 0 && n.position.y === 0))
+    const hasOverlaps = (nodesList) => {
+      const width = 240
+      const height = 150
+      for (let i = 0; i < nodesList.length; i++) {
+        for (let j = i + 1; j < nodesList.length; j++) {
+          const n1 = nodesList[i]
+          const n2 = nodesList[j]
+          if (
+            n1.position && n2.position &&
+            Math.abs(n1.position.x - n2.position.x) < width &&
+            Math.abs(n1.position.y - n2.position.y) < height
+          ) {
+            return true
+          }
+        }
+      }
+      return false
+    }
+
+    // Auto-layout on initial generation if they are unpositioned or if they overlap
+    const needsLayout =
+      propNodes.length > 0 &&
+      (propNodes.some(n => !n.position || (n.position.x === 0 && n.position.y === 0)) ||
+       hasOverlaps(apiNodes))
+
     if (needsLayout) {
       const { nodes: ln, edges: le } = getLayoutedElements(apiNodes, apiEdges, 'TB')
       setNodes(ln)

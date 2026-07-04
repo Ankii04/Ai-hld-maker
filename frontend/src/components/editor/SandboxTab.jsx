@@ -12,6 +12,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { sandboxNodeTypes } from '../diagram/SandboxNodes'
 import SimulationEdge from '../diagram/SimulationEdge'
+import dagre from 'dagre'
 import {
   Play,
   Pause,
@@ -377,6 +378,58 @@ const buildWalkthroughSteps = (pathNodes, pathEdges) => {
   return steps
 }
 
+const getLayoutedElements = (nodes, edges, direction = 'TB') => {
+  const dagreGraph = new dagre.graphlib.Graph()
+  dagreGraph.setDefaultEdgeLabel(() => ({}))
+  
+  const isHorizontal = direction === 'LR'
+  dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 80 })
+
+  nodes.forEach((node) => {
+    dagreGraph.setNode(node.id, { width: 240, height: 160 })
+  })
+
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target)
+  })
+
+  dagre.layout(dagreGraph)
+
+  const layoutedNodes = nodes.map((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id)
+    return {
+      ...node,
+      targetPosition: isHorizontal ? 'left' : 'top',
+      sourcePosition: isHorizontal ? 'right' : 'bottom',
+      position: {
+        x: nodeWithPosition.x - 120,
+        y: nodeWithPosition.y - 80,
+      },
+    }
+  })
+
+  return { nodes: layoutedNodes, edges }
+}
+
+const hasOverlaps = (nodesList) => {
+  const width = 240
+  const height = 150
+  for (let i = 0; i < nodesList.length; i++) {
+    for (let j = i + 1; j < nodesList.length; j++) {
+      const n1 = nodesList[i]
+      const n2 = nodesList[j]
+      if (
+        n1.position && n2.position &&
+        Math.abs(n1.position.x - n2.position.x) < width &&
+        Math.abs(n1.position.y - n2.position.y) < height
+      ) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
 /* ─── SandboxTab Component ────────────────────────────────────────────────── */
 export default function SandboxTab({ design }) {
   const blueprintNodes = design?.hld?.nodes || []
@@ -443,6 +496,26 @@ export default function SandboxTab({ design }) {
   const walkthroughSteps = useMemo(() => {
     return buildWalkthroughSteps(walkthroughData.pathNodes, walkthroughData.pathEdges)
   }, [walkthroughData])
+
+  // Sync design changes and apply auto-layout if they overlap
+  useEffect(() => {
+    const sandboxNodes = convertToSandboxNodes(blueprintNodes)
+    const sandboxEdges = convertToSimulationEdges(blueprintEdges)
+
+    const needsLayout =
+      blueprintNodes.length > 0 &&
+      (blueprintNodes.some(n => !n.position || (n.position.x === 0 && n.position.y === 0)) ||
+       hasOverlaps(sandboxNodes))
+
+    if (needsLayout) {
+      const { nodes: ln, edges: le } = getLayoutedElements(sandboxNodes, sandboxEdges, 'TB')
+      setNodes(ln)
+      setEdges(le)
+    } else {
+      setNodes(sandboxNodes)
+      setEdges(sandboxEdges)
+    }
+  }, [JSON.stringify(blueprintNodes), JSON.stringify(blueprintEdges)])
 
   // Auto-scroll log console
   useEffect(() => {
