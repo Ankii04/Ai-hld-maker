@@ -925,6 +925,30 @@
   pointer-events: all !important;
 }
 
+/* ============================================================
+   Sandbox Fullscreen Layout Fix
+   ============================================================ */
+#sandbox-tab:fullscreen,
+#sandbox-tab:-webkit-full-screen,
+#sandbox-tab:-ms-fullscreen {
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: #0a0a0f !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+@media (max-width: 768px) {
+  #sandbox-tab:fullscreen,
+  #sandbox-tab:-webkit-full-screen,
+  #sandbox-tab:-ms-fullscreen {
+    flex-direction: column !important;
+  }
+}
+
+
 
 
 
