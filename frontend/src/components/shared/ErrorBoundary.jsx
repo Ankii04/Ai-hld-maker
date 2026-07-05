@@ -13,6 +13,18 @@ export class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
+    
+    // Auto-reload for chunk loading errors (e.g. after a new deployment)
+    const errorString = error?.message || error?.toString() || ''
+    if (
+      errorString.includes('Failed to fetch dynamically imported module') ||
+      errorString.includes('Importing a module script failed')
+    ) {
+      console.warn('Chunk load error detected. Reloading page...')
+      window.location.reload()
+      return
+    }
+
     if (this.state.recoveryAttempts < 1) {
       console.warn('ErrorBoundary attempting auto-recovery...')
       this.setState(prevState => ({
@@ -24,7 +36,11 @@ export class ErrorBoundary extends Component {
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null, recoveryAttempts: 0 })
+    if (this.state.error?.message?.includes('fetch')) {
+      window.location.reload()
+    } else {
+      this.setState({ hasError: false, error: null, recoveryAttempts: 0 })
+    }
   }
 
   render() {
