@@ -69,14 +69,12 @@ const useAuthStore = create(
         const { token } = get()
         if (!token) return { success: false, message: 'No token' }
 
-        set({ isLoading: true, error: null })
         try {
           const data = await api.get('/auth/me')
           const fetchedUser = data.data || data.user
           set({
             user: fetchedUser,
             isAuthenticated: true,
-            isLoading: false,
             error: null,
           })
           return { success: true, user: fetchedUser }
@@ -86,7 +84,6 @@ const useAuthStore = create(
             user: null,
             token: null,
             isAuthenticated: false,
-            isLoading: false,
             error: err.message,
           })
           return { success: false, message: err.message }
