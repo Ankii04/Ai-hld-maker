@@ -236,7 +236,6 @@ const Login = () => {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              </div>
             </div>
 
             {/* Submit */}
