@@ -129,7 +129,7 @@ export const ARCHITECTURE_TEMPLATES = [
         { title: 'Kong Gateway Instance', description: 'If the single gateway crashes, all API requests fail.', severity: 'high', fix: 'Deploy Kong in active-passive clustering mode behind NGINX.' }
       ],
       recommendations: [
-        { title: 'Implement Redis Read Replia', impact: 'medium' }
+        { title: 'Implement Redis Read Replica', impact: 'medium' }
       ]
     }
   },

@@ -19,7 +19,6 @@ export const exportFullDesignAsPDF = async (designTitle) => {
     'lld-tab',
     'database-tab',
     'api-tab',
-    'uiux-tab',
     'scalability-tab',
   ]
   const combined = document.createElement('div')

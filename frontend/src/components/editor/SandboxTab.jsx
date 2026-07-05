@@ -181,7 +181,7 @@ const getStepPayloadAndData = (node, direction) => {
       case 'client':
         return {
           payload: 'HTTP Request',
-          inspectData: `GET /api/v1/profile HTTP/1.1\nHost: smartpark.ai\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\nAccept: application/json`
+          inspectData: `GET /api/v1/profile HTTP/1.1\nHost: api.example.com\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\nAccept: application/json`
         }
       case 'cdn':
         return {
@@ -230,7 +230,7 @@ const getStepPayloadAndData = (node, direction) => {
       case 'client':
         return {
           payload: 'Render 200 OK',
-          inspectData: `HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: 175\n\n{\n  "status": "success",\n  "data": {\n    "id": 1042,\n    "email": "user@smartpark.ai",\n    "bio": "Active system user profile."\n  }\n}`
+          inspectData: `HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: 175\n\n{\n  "status": "success",\n  "data": {\n    "id": 1042,\n    "email": "user@example.com",\n    "bio": "Active system user profile."\n  }\n}`
         }
       case 'cdn':
         return {
@@ -250,12 +250,12 @@ const getStepPayloadAndData = (node, direction) => {
       case 'service':
         return {
           payload: 'Format API JSON',
-          inspectData: `Service [${label}] Response Builder:\n- JSON Payload Formatted:\n{\n  "status": "success",\n  "data": { "id": 1042, "email": "user@smartpark.ai" }\n}`
+          inspectData: `Service [${label}] Response Builder:\n- JSON Payload Formatted:\n{\n  "status": "success",\n  "data": { "id": 1042, "email": "user@example.com" }\n}`
         }
       case 'database':
         return {
           payload: 'Query Rows Result',
-          inspectData: `PostgreSQL Database Response:\n- Status: SELECT 1\n- Duration: 2.1ms\n- Row Result: { "id": 1042, "email": "user@smartpark.ai" }`
+          inspectData: `PostgreSQL Database Response:\n- Status: SELECT 1\n- Duration: 2.1ms\n- Row Result: { "id": 1042, "email": "user@example.com" }`
         }
       case 'cache':
         return {

@@ -1,7 +1,8 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
-import { Toaster } from 'react-hot-toast'
+import { Toaster, toast } from 'react-hot-toast'
 import useAuthStore from './store/authStore'
+import ErrorBoundary from './components/shared/ErrorBoundary'
 
 /* ─── Lazy-loaded pages ─────────────────────────────────────── */
 const Landing     = lazy(() => import('./pages/Landing'))
@@ -10,6 +11,7 @@ const Signup      = lazy(() => import('./pages/Signup'))
 const Dashboard   = lazy(() => import('./pages/Dashboard'))
 const Editor      = lazy(() => import('./pages/Editor'))
 const PublicShare = lazy(() => import('./pages/PublicShare'))
+const NotFound    = lazy(() => import('./pages/NotFound'))
 
 /* ─── Full-screen loading fallback ────────────────────────────── */
 const PageLoader = () => (
@@ -59,7 +61,11 @@ const PageLoader = () => (
  * so we can redirect back after login.
  */
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { isAuthenticated, isLoading } = useAuthStore()
+
+  if (isLoading) {
+    return <PageLoader />
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
@@ -137,12 +143,33 @@ const toasterOptions = {
 
 /* ─── Root App Component ────────────────────────────────────────── */
 const App = () => {
+  useEffect(() => {
+    const handleWindowError = (event) => {
+      console.error('Global Error:', event.error || event.message)
+      toast.error('An unexpected error occurred.')
+    }
+
+    const handleUnhandledRejection = (event) => {
+      console.error('Unhandled Promise Rejection:', event.reason)
+      toast.error('A background task failed unexpectedly.')
+    }
+
+    window.addEventListener('error', handleWindowError)
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+
+    return () => {
+      window.removeEventListener('error', handleWindowError)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
+  }, [])
+
   return (
     <BrowserRouter>
       {/* Global toast notifications */}
       <Toaster {...toasterOptions} />
 
-      <Suspense fallback={<PageLoader />}>
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* ── Public routes ── */}
           <Route path="/" element={<Landing />} />
@@ -179,9 +206,11 @@ const App = () => {
           />
 
           {/* ── 404 fallback ── */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/404" replace />} />
+          <Route path="/404" element={<NotFound />} />
         </Routes>
       </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }

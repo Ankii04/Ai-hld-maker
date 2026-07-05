@@ -33,6 +33,7 @@ import ScalabilityTab from '../components/editor/ScalabilityTab'
 import ChallengeTab from '../components/editor/ChallengeTab'
 import HistoryTab from '../components/editor/HistoryTab'
 import SandboxTab from '../components/editor/SandboxTab'
+import CanvasTab from '../components/editor/CanvasTab'
 
 
 /* ─────────────────────────── Upgrade Modal ─────────────────────────── */
@@ -578,6 +579,7 @@ const Editor = () => {
                 onChallenge={() => {
                   challengeDesign(currentDesign?._id || currentDesign?.id)
                 }}
+                onToggleCollapse={() => setIsSidebarOpen(false)}
               />
             </div>
           </aside>
@@ -606,6 +608,7 @@ const Editor = () => {
                   {activeTab === 'database' && <DatabaseTab design={currentDesign} />}
                   {activeTab === 'apis' && <APITab design={currentDesign} />}
                   {activeTab === 'scalability' && <ScalabilityTab design={currentDesign} />}
+                  {activeTab === 'canvas' && <CanvasTab design={currentDesign} />}
                   {activeTab === 'challenge' && (
                     <ChallengeTab
                       design={currentDesign}

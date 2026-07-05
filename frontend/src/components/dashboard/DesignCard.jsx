@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
-import { Edit3, Trash2, CheckCircle, Clock } from 'lucide-react'
+import { Edit3, Trash2, CheckCircle, Clock, AlertCircle, RefreshCw } from 'lucide-react'
 
 const TAG_COLORS = [
   { bg: '#1e3a5f', text: '#60a5fa', border: '#3b82f630' },
@@ -54,6 +54,7 @@ export default function DesignCard({ design, onDelete }) {
     : 'recently'
 
   const isGenerated = design.status === 'generated' || design.hld
+  const isError = design.status === 'error' || design.status === 'failed'
 
   return (
     <div
@@ -71,17 +72,19 @@ export default function DesignCard({ design, onDelete }) {
       {/* Status badge */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          {isGenerated ? (
+          {isError ? (
+            <AlertCircle size={12} className="text-[#f87171]" />
+          ) : isGenerated ? (
             <CheckCircle size={12} className="text-[#4ade80]" />
           ) : (
             <Clock size={12} className="text-[#94a3b8]" />
           )}
           <span
             className={`text-[10px] font-bold uppercase tracking-wider ${
-              isGenerated ? 'text-[#4ade80]' : 'text-[#94a3b8]'
+              isError ? 'text-[#f87171]' : isGenerated ? 'text-[#4ade80]' : 'text-[#94a3b8]'
             }`}
           >
-            {isGenerated ? 'Generated' : 'Draft'}
+            {isError ? 'Failed' : isGenerated ? 'Generated' : 'Draft'}
           </span>
         </div>
         <span className="text-[10px] text-[#4a4a6a]">{timeAgo}</span>
@@ -135,10 +138,10 @@ export default function DesignCard({ design, onDelete }) {
       <div className="flex items-center gap-2 pt-1 border-t border-[#2a2a3d] mt-auto">
         <button
           onClick={handleEdit}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1a1a28] border border-[#2a2a3d] text-[#94a3b8] hover:border-[#3b82f6]/60 hover:text-[#3b82f6] hover:bg-[#3b82f6]/10 transition-all flex-1 justify-center"
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1a1a28] border border-[#2a2a3d] ${isError ? 'text-[#f87171] hover:border-[#f87171]/60 hover:text-[#f87171] hover:bg-[#f87171]/10' : 'text-[#94a3b8] hover:border-[#3b82f6]/60 hover:text-[#3b82f6] hover:bg-[#3b82f6]/10'} transition-all flex-1 justify-center`}
         >
-          <Edit3 size={12} />
-          Edit
+          {isError ? <RefreshCw size={12} /> : <Edit3 size={12} />}
+          {isError ? 'Retry' : 'Edit'}
         </button>
         <button
           onClick={handleDelete}

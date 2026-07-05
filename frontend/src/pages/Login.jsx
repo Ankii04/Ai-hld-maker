@@ -190,12 +190,13 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
+              <label htmlFor="email" className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
                 Email Address
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8] pointer-events-none" />
                 <input
+                  id="email"
                   type="email"
                   name="email"
                   value={form.email}
@@ -210,12 +211,13 @@ const Login = () => {
 
             {/* Password */}
             <div>
-              <label className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
+              <label htmlFor="password" className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
                 Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8] pointer-events-none" />
                 <input
+                  id="password"
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={form.password}
@@ -234,10 +236,6 @@ const Login = () => {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <div className="flex justify-end mt-1.5">
-                <a href="#" className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
-                  Forgot password?
-                </a>
               </div>
             </div>
 

@@ -136,8 +136,8 @@ const Signup = () => {
   const passwordStrength = () => {
     const p = form.password
     if (!p) return null
-    if (p.length < 6) return { label: 'Too short', color: 'bg-red-500', width: 'w-1/4' }
-    if (p.length < 8) return { label: 'Weak', color: 'bg-yellow-500', width: 'w-2/4' }
+    if (p.length < 8) return { label: 'Too short', color: 'bg-red-500', width: 'w-1/4' }
+    if (p.length < 10) return { label: 'Weak', color: 'bg-yellow-500', width: 'w-2/4' }
     if (!/[A-Z]/.test(p) || !/[0-9]/.test(p)) return { label: 'Fair', color: 'bg-blue-500', width: 'w-3/4' }
     return { label: 'Strong', color: 'bg-green-500', width: 'w-full' }
   }
@@ -181,12 +181,13 @@ const Signup = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name */}
             <div>
-              <label className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
+              <label htmlFor="name" className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
                 Full Name
               </label>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8] pointer-events-none" />
                 <input
+                  id="name"
                   type="text"
                   name="name"
                   value={form.name}
@@ -201,12 +202,13 @@ const Signup = () => {
 
             {/* Email */}
             <div>
-              <label className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
+              <label htmlFor="email" className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
                 Email Address
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8] pointer-events-none" />
                 <input
+                  id="email"
                   type="email"
                   name="email"
                   value={form.email}
@@ -221,12 +223,13 @@ const Signup = () => {
 
             {/* Password */}
             <div>
-              <label className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
+              <label htmlFor="password" className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
                 Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8] pointer-events-none" />
                 <input
+                  id="password"
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={form.password}
@@ -234,7 +237,7 @@ const Signup = () => {
                   placeholder="Min. 8 characters"
                   autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={8}
                   className="w-full pl-10 pr-12 py-3 rounded-xl bg-[#1a1a28] border border-[#2a2a3d] text-[#f1f5f9] placeholder-[#94a3b8]/50 text-sm focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/10 transition-all duration-200"
                 />
                 <button
@@ -259,9 +262,7 @@ const Signup = () => {
 
             {/* Terms note */}
             <p className="text-[11px] text-[#94a3b8] leading-relaxed">
-              By creating an account, you agree to our{' '}
-              <a href="#" className="text-blue-400 hover:text-blue-300">Terms of Service</a> and{' '}
-              <a href="#" className="text-blue-400 hover:text-blue-300">Privacy Policy</a>.
+              By creating an account, you agree to our Terms of Service and Privacy Policy.
             </p>
 
             {/* Submit */}

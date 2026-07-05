@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Loader2,
   User,
+  ChevronLeft,
 } from 'lucide-react'
 
 const TECH_OPTIONS = [
@@ -35,6 +36,7 @@ export default function RequirementsPanel({
   currentDesign = null,
   generationStep = 0,
   user = null,
+  onToggleCollapse,
 }) {
   const [productName, setProductName] = useState('')
   const [requirements, setRequirements] = useState('')
@@ -82,13 +84,24 @@ export default function RequirementsPanel({
   return (
     <aside className="w-80 min-h-screen bg-[#12121a] border-r border-[#2a2a3d] flex flex-col overflow-y-auto">
       {/* Header */}
-      <div className="p-5 border-b border-[#2a2a3d]">
-        <h2 className="text-[#f1f5f9] font-semibold text-base tracking-wide">
-          System Requirements
-        </h2>
-        <p className="text-[#94a3b8] text-xs mt-1">
-          Describe what you want to build
-        </p>
+      <div className="p-5 border-b border-[#2a2a3d] flex items-center justify-between">
+        <div>
+          <h2 className="text-[#f1f5f9] font-semibold text-base tracking-wide">
+            System Requirements
+          </h2>
+          <p className="text-[#94a3b8] text-xs mt-1">
+            Describe what you want to build
+          </p>
+        </div>
+        {onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            className="p-1.5 rounded-lg text-[#94a3b8] hover:bg-[#1a1a28] hover:text-[#f1f5f9] transition-colors"
+            title="Collapse Panel"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 p-5 space-y-5">

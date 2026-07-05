@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { BrainCircuit, Eye, AlertCircle } from 'lucide-react'
 import api from '../utils/api'
 import HLDTab from '../components/editor/HLDTab'
@@ -41,9 +41,9 @@ export default function PublicShare({ shareId: propShareId, readOnly }) {
         <AlertCircle size={48} className="text-[#ef4444]" />
         <h2 className="text-xl font-bold text-[#f1f5f9] font-heading">Design Not Found</h2>
         <p className="text-[#94a3b8] text-sm text-center">{error}</p>
-        <a href="/" className="px-4 py-2 rounded-lg bg-[#3b82f6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors">
+        <Link to="/" className="px-4 py-2 rounded-lg bg-[#3b82f6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors">
           Go to ArchMind
-        </a>
+        </Link>
       </div>
     </div>
   )
@@ -106,7 +106,7 @@ export default function PublicShare({ shareId: propShareId, readOnly }) {
       {/* Footer */}
       <div className="border-t border-[#2a2a3d] py-4 text-center">
         <p className="text-[#4a5568] text-xs">
-          Shared via <a href="/" className="text-[#3b82f6] hover:underline">ArchMind</a> · AI-powered System Design Generator
+          Shared via <Link to="/" className="text-[#3b82f6] hover:underline">ArchMind</Link> · AI-powered System Design Generator
         </p>
       </div>
     </div>

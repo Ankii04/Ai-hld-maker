@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Handle, Position } from '@xyflow/react'
+import { Handle, Position, useReactFlow } from '@xyflow/react'
 import {
   Monitor,
   Smartphone,
@@ -30,6 +30,21 @@ function NodeShell({
 }) {
   const [editing, setEditing] = useState(false)
   const [editLabel, setEditLabel] = useState(label)
+  const { setNodes } = useReactFlow()
+
+  const handleSave = () => {
+    setEditing(false)
+    if (editLabel !== label && id) {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id === id) {
+            return { ...n, data: { ...n.data, label: editLabel } }
+          }
+          return n
+        })
+      )
+    }
+  }
 
   return (
     <div
@@ -66,8 +81,8 @@ function NodeShell({
             autoFocus
             value={editLabel}
             onChange={(e) => setEditLabel(e.target.value)}
-            onBlur={() => setEditing(false)}
-            onKeyDown={(e) => e.key === 'Enter' && setEditing(false)}
+            onBlur={handleSave}
+            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             className="bg-transparent text-[#f1f5f9] text-xs font-semibold outline-none border-b border-[#3b82f6] w-full"
             onClick={(e) => e.stopPropagation()}
           />
@@ -120,10 +135,11 @@ function NodeShell({
 }
 
 /* ─── ClientNode ────────────────────────────────────────────────────────── */
-export function ClientNode({ data, selected, targetPosition, sourcePosition }) {
+export function ClientNode({ id, data, selected, targetPosition, sourcePosition }) {
   const Icon = data?.deviceType === 'mobile' ? Smartphone : Monitor
   return (
     <NodeShell
+      id={id}
       selected={selected}
       targetPosition={targetPosition}
       sourcePosition={sourcePosition}
@@ -140,9 +156,10 @@ export function ClientNode({ data, selected, targetPosition, sourcePosition }) {
 }
 
 /* ─── CDNNode ────────────────────────────────────────────────────────────── */
-export function CDNNode({ data, selected, targetPosition, sourcePosition }) {
+export function CDNNode({ id, data, selected, targetPosition, sourcePosition }) {
   return (
     <NodeShell
+      id={id}
       selected={selected}
       targetPosition={targetPosition}
       sourcePosition={sourcePosition}
@@ -159,9 +176,10 @@ export function CDNNode({ data, selected, targetPosition, sourcePosition }) {
 }
 
 /* ─── LoadBalancerNode ───────────────────────────────────────────────────── */
-export function LoadBalancerNode({ data, selected, targetPosition, sourcePosition }) {
+export function LoadBalancerNode({ id, data, selected, targetPosition, sourcePosition }) {
   return (
     <NodeShell
+      id={id}
       selected={selected}
       targetPosition={targetPosition}
       sourcePosition={sourcePosition}
@@ -178,9 +196,10 @@ export function LoadBalancerNode({ data, selected, targetPosition, sourcePositio
 }
 
 /* ─── GatewayNode ────────────────────────────────────────────────────────── */
-export function GatewayNode({ data, selected, targetPosition, sourcePosition }) {
+export function GatewayNode({ id, data, selected, targetPosition, sourcePosition }) {
   return (
     <NodeShell
+      id={id}
       selected={selected}
       targetPosition={targetPosition}
       sourcePosition={sourcePosition}
@@ -197,9 +216,10 @@ export function GatewayNode({ data, selected, targetPosition, sourcePosition }) 
 }
 
 /* ─── ServiceNode ────────────────────────────────────────────────────────── */
-export function ServiceNode({ data, selected, targetPosition, sourcePosition }) {
+export function ServiceNode({ id, data, selected, targetPosition, sourcePosition }) {
   return (
     <NodeShell
+      id={id}
       selected={selected}
       targetPosition={targetPosition}
       sourcePosition={sourcePosition}
@@ -298,9 +318,10 @@ export function DatabaseNode({ data, selected, targetPosition = 'top', sourcePos
 }
 
 /* ─── CacheNode ──────────────────────────────────────────────────────────── */
-export function CacheNode({ data, selected, targetPosition, sourcePosition }) {
+export function CacheNode({ id, data, selected, targetPosition, sourcePosition }) {
   return (
     <NodeShell
+      id={id}
       selected={selected}
       targetPosition={targetPosition}
       sourcePosition={sourcePosition}
@@ -317,9 +338,10 @@ export function CacheNode({ data, selected, targetPosition, sourcePosition }) {
 }
 
 /* ─── QueueNode ──────────────────────────────────────────────────────────── */
-export function QueueNode({ data, selected, targetPosition, sourcePosition }) {
+export function QueueNode({ id, data, selected, targetPosition, sourcePosition }) {
   return (
     <NodeShell
+      id={id}
       selected={selected}
       targetPosition={targetPosition}
       sourcePosition={sourcePosition}

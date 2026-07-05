@@ -208,7 +208,7 @@ export default function LLDTab({ design }) {
 
       {/* Service Dependency Diagram */}
       {services.length > 1 && (
-        <div className="rounded-2xl overflow-hidden border border-[#2a2a3d] bg-[#0a0a0f]" style={{ height: 300 }}>
+        <div className="relative rounded-2xl overflow-hidden border border-[#2a2a3d] bg-[#0a0a0f]" style={{ height: 300 }}>
           <div className="absolute z-10 m-3">
             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#3b82f6]/20 text-[#3b82f6] border border-[#3b82f6]/30">
               Service Dependencies

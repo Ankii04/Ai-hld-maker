@@ -6,7 +6,7 @@ import axios from 'axios'
  * Base URL resolves to VITE_API_URL env variable (production) or
  * falls back to '/api' which is proxied to localhost:5000 in dev via vite.config.js.
  *
- * Timeout: 120 s — generous to accommodate long AI generation requests.
+ * Timeout: 300s — generous to accommodate long AI generation requests.
  */
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',

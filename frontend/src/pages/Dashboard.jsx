@@ -23,30 +23,17 @@ import { toast } from 'react-hot-toast'
 import StatsBar from '../components/dashboard/StatsBar'
 import DesignCard from '../components/dashboard/DesignCard'
 import { ARCHITECTURE_TEMPLATES } from '../utils/templates'
+import { CardSkeleton } from '../components/shared/LoadingSkeleton'
 
 /* ─────────────────────────── Skeleton Card ─────────────────────────── */
 
-const SkeletonCard = () => (
-  <div className="bg-[#12121a] border border-[#2a2a3d] rounded-xl p-5 animate-pulse">
-    <div className="flex items-start justify-between mb-4">
-      <div className="w-10 h-10 rounded-lg bg-[#1a1a28]" />
-      <div className="w-16 h-5 rounded-full bg-[#1a1a28]" />
-    </div>
-    <div className="w-3/4 h-4 rounded bg-[#1a1a28] mb-2" />
-    <div className="w-1/2 h-3 rounded bg-[#1a1a28] mb-4" />
-    <div className="w-full h-px bg-[#2a2a3d] mb-4" />
-    <div className="flex gap-2">
-      <div className="w-12 h-5 rounded-full bg-[#1a1a28]" />
-      <div className="w-12 h-5 rounded-full bg-[#1a1a28]" />
-      <div className="w-12 h-5 rounded-full bg-[#1a1a28]" />
-    </div>
-  </div>
-)
+
 
 /* ─────────────────────────── New Design Modal ─────────────────────────── */
 
 const NewDesignModal = ({ onClose, onCreate }) => {
   const [name, setName] = useState('')
+  const [requirements, setRequirements] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const inputRef = useRef(null)
@@ -64,7 +51,7 @@ const NewDesignModal = ({ onClose, onCreate }) => {
         await onCreate({
           title: trimmed,
           productName: selectedTemplate.productName,
-          requirements: selectedTemplate.requirements || `Architecture based on ${selectedTemplate.title}`,
+          requirements: requirements || selectedTemplate.requirements || `Architecture based on ${selectedTemplate.title}`,
           constraints: selectedTemplate.constraints,
           status: selectedTemplate.status,
           hld: selectedTemplate.hld,
@@ -75,7 +62,7 @@ const NewDesignModal = ({ onClose, onCreate }) => {
           challengeMode: selectedTemplate.challengeMode
         })
       } else {
-        await onCreate({ title: trimmed, productName: trimmed })
+        await onCreate({ title: trimmed, productName: trimmed, requirements })
       }
     } finally {
       setIsCreating(false)
@@ -85,6 +72,7 @@ const NewDesignModal = ({ onClose, onCreate }) => {
   const handleSelectTemplate = (tpl) => {
     setSelectedTemplate(tpl)
     setName(tpl.title)
+    setRequirements(tpl.requirements || '')
   }
 
   const handleKeyDown = (e) => {
@@ -133,6 +121,19 @@ const NewDesignModal = ({ onClose, onCreate }) => {
               onKeyDown={handleKeyDown}
               placeholder="e.g. Ridesharing platform, E-Commerce Platform…"
               className="w-full px-4 py-3 rounded-xl bg-[#1a1a28] border border-[#2a2a3d] text-[#f1f5f9] placeholder-[#94a3b8]/40 text-sm focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">
+              Detailed Requirements (Optional)
+            </label>
+            <textarea
+              value={requirements}
+              onChange={(e) => setRequirements(e.target.value)}
+              placeholder="Describe specific features, constraints, expected scale, etc..."
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl bg-[#1a1a28] border border-[#2a2a3d] text-[#f1f5f9] placeholder-[#94a3b8]/40 text-sm focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 resize-none"
             />
           </div>
 
@@ -401,8 +402,8 @@ const ProfileSettingsModal = ({ onClose, user, activeTab = 'profile', designs = 
                   {initials}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-[#f1f5f9]">{user?.name || 'Ankit Kumar'}</h3>
-                  <p className="text-xs text-[#94a3b8] mt-0.5">{user?.email || 'ankitkr1841@gmail.com'}</p>
+                  <h3 className="text-base font-bold text-[#f1f5f9]">{user?.name || 'User'}</h3>
+                  <p className="text-xs text-[#94a3b8] mt-0.5">{user?.email || 'user@example.com'}</p>
                   <div className="flex items-center gap-1.5 mt-2">
                     {isPro ? (
                       <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-[10px] font-bold flex items-center gap-0.5">
@@ -710,7 +711,7 @@ const Dashboard = () => {
         {/* Content area */}
         {isLoading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+            {[...Array(6)].map((_, i) => <CardSkeleton key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
           search ? (

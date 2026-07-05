@@ -311,7 +311,7 @@ const Hero = () => {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate('/signup')}
                   className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl border border-[#2a2a3d] text-[#f1f5f9] font-semibold hover:bg-[#12121a] hover:border-[#3b82f6]/40 transition-all duration-200 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)]"
                 >
                   <Play className="w-4 h-4 text-blue-400" />
@@ -658,27 +658,24 @@ const Footer = () => (
             AI-powered system design & architecture generator for modern engineering teams.
           </p>
           <div className="flex gap-3 mt-4">
-            {[Github, Twitter, Linkedin].map((Icon, i) => (
-              <div
-                key={i}
-                className="w-8 h-8 rounded-lg border border-[#2a2a3d] flex items-center justify-center hover:border-blue-500/40 hover:bg-blue-500/5 transition-colors cursor-pointer"
-              >
-                <Icon className="w-4 h-4 text-[#94a3b8]" />
-              </div>
-            ))}
+            <a href="https://github.com/Ankii04" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="w-8 h-8 rounded-lg border border-[#2a2a3d] flex items-center justify-center hover:border-blue-500/40 hover:bg-blue-500/5 transition-colors cursor-pointer">
+              <Github className="w-4 h-4 text-[#94a3b8]" />
+            </a>
+            <a href="https://www.linkedin.com/in/ankii04/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="w-8 h-8 rounded-lg border border-[#2a2a3d] flex items-center justify-center hover:border-blue-500/40 hover:bg-blue-500/5 transition-colors cursor-pointer">
+              <Linkedin className="w-4 h-4 text-[#94a3b8]" />
+            </a>
           </div>
         </div>
         {[
-          { title: 'Product', links: ['Features', 'Pricing', 'Changelog', 'Roadmap'] },
-          { title: 'Company', links: ['About', 'Blog', 'Careers', 'Contact'] },
+          { title: 'Product', links: [{name: 'Features', url: '#features'}, {name: 'Pricing', url: '#pricing'}] },
         ].map(({ title, links }) => (
           <div key={title}>
             <h4 className="text-[#f1f5f9] font-semibold text-sm mb-4">{title}</h4>
             <ul className="space-y-2.5">
               {links.map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-[#94a3b8] text-sm hover:text-[#f1f5f9] transition-colors">
-                    {link}
+                <li key={link.name}>
+                  <a href={link.url} className="text-[#94a3b8] text-sm hover:text-[#f1f5f9] transition-colors">
+                    {link.name}
                   </a>
                 </li>
               ))}
@@ -689,11 +686,6 @@ const Footer = () => (
       <div className="border-t border-[#2a2a3d] pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="text-[#94a3b8] text-xs">© 2026 ArchMind. All rights reserved.</p>
         <div className="flex gap-6">
-          {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((item) => (
-            <a key={item} href="#" className="text-[#94a3b8] text-xs hover:text-[#f1f5f9] transition-colors">
-              {item}
-            </a>
-          ))}
         </div>
       </div>
     </div>
@@ -769,7 +761,7 @@ const Docs = () => {
         {/* Tab Content */}
         <div className="bg-[#12121a] border border-[#2a2a3d] rounded-2xl p-6 lg:p-10 shadow-2xl relative min-h-[400px]">
           {activeTab === 'stack' && (
-            <div className="space-y-8 animate-fadeIn">
+            <div className="space-y-8 animate-fade-in">
               <div>
                 <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">Decoupled Full-Stack Architecture</h3>
                 <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
@@ -822,7 +814,7 @@ const Docs = () => {
           )}
 
           {activeTab === 'flow' && (
-            <div className="space-y-8 animate-fadeIn">
+            <div className="space-y-8 animate-fade-in">
               <div>
                 <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">Application Lifecycle</h3>
                 <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
@@ -871,7 +863,7 @@ const Docs = () => {
           )}
 
           {activeTab === 'ai' && (
-            <div className="space-y-8 animate-fadeIn">
+            <div className="space-y-8 animate-fade-in">
               <div>
                 <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">How the AI Works: The Secret Sauce</h3>
                 <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
@@ -918,7 +910,7 @@ const Docs = () => {
           )}
 
           {activeTab === 'vercel' && (
-            <div className="space-y-8 animate-fadeIn">
+            <div className="space-y-8 animate-fade-in">
               <div>
                 <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">Vercel SPA Routing Configuration</h3>
                 <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">

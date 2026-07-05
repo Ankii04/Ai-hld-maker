@@ -6,6 +6,7 @@ const TABS = [
   { id: 'database', label: 'Database' },
   { id: 'apis', label: 'APIs' },
   { id: 'scalability', label: 'Scalability' },
+  { id: 'canvas', label: 'Canvas 🎨' },
   { id: 'sandbox', label: 'Sandbox 🧪' },
   { id: 'challenge', label: 'Challenge 🔥' },
   { id: 'history', label: 'History 🕒' },
@@ -20,12 +21,15 @@ export default function TabBar({
   return (
     <div className="flex items-center justify-between border-b border-[#2a2a3d] bg-[#12121a] px-4 min-h-[48px] flex-shrink-0">
       {/* Tabs */}
-      <div className="flex items-end h-full gap-0 overflow-x-auto no-scrollbar flex-1 min-w-0">
+      <div role="tablist" className="flex items-end h-full gap-0 overflow-x-auto no-scrollbar flex-1 min-w-0">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id
           return (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              aria-controls={`${tab.id}-panel`}
               onClick={() => onTabChange?.(tab.id)}
               className={`relative px-4 py-3 text-sm font-medium transition-all duration-150 whitespace-nowrap focus:outline-none ${
                 isActive
