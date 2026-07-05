@@ -1,10 +1,11 @@
-import { Square, Circle, Diamond } from 'lucide-react'
+import { Square, Circle, Diamond, Type } from 'lucide-react'
 
 export default function CanvasToolbar({ onAddNode }) {
   const shapes = [
     { type: 'rectangle', icon: Square, label: 'Rectangle' },
     { type: 'circle', icon: Circle, label: 'Circle' },
     { type: 'diamond', icon: Diamond, label: 'Diamond' },
+    { type: 'text', icon: Type, label: 'Text' },
   ]
 
   return (

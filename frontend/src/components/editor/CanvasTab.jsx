@@ -13,6 +13,7 @@ import '@xyflow/react/dist/style.css'
 import { CanvasNodes } from '../diagram/CanvasNodes'
 import CanvasToolbar from '../diagram/CanvasToolbar'
 import ContextMenu from '../diagram/ContextMenu'
+import CanvasProperties from '../diagram/CanvasProperties'
 import { Undo, Redo } from 'lucide-react'
 
 function useHistory(initialNodes, initialEdges) {
@@ -54,6 +55,8 @@ export default function CanvasTab({ design }) {
   const [edges, setEdges, onEdgesChangeCore] = useEdgesState(state.edges)
   const [reactFlowInstance, setReactFlowInstance] = useState(null)
   const [menu, setMenu] = useState(null)
+  const [selectedNodeId, setSelectedNodeId] = useState(null)
+  const [selectedEdgeId, setSelectedEdgeId] = useState(null)
   const reactFlowWrapper = useRef(null)
 
   useEffect(() => {
@@ -75,7 +78,7 @@ export default function CanvasTab({ design }) {
 
   const onConnect = useCallback((params) => {
     setEdges((eds) => {
-      const nextEds = addEdge(params, eds)
+      const nextEds = addEdge({ ...params, type: 'default', animated: false }, eds)
       pushState(nodes, nextEds)
       return nextEds
     })
@@ -98,7 +101,7 @@ export default function CanvasTab({ design }) {
       id: `canvas_${Date.now()}`,
       type: 'resizableShape',
       position,
-      data: { label: 'New Shape', shape: type, color: '#1e293b' },
+      data: { shape: type, color: type === 'text' ? 'transparent' : '#1e293b', label: type === 'text' ? 'Text' : 'New Shape' },
     }
     setNodes((nds) => {
       const nextNds = nds.concat(newNode)
@@ -106,6 +109,59 @@ export default function CanvasTab({ design }) {
       return nextNds
     })
   }, [edges, pushState, setNodes])
+
+  const handleDuplicate = useCallback(() => {
+    if (!menu?.node) return
+    const newNode = {
+      ...menu.node,
+      id: `canvas_${Date.now()}`,
+      position: { x: menu.node.position.x + 30, y: menu.node.position.y + 30 },
+      selected: true
+    }
+    setNodes((nds) => {
+      const nextNds = nds.map(n => ({ ...n, selected: false })).concat(newNode)
+      pushState(nextNds, edges)
+      return nextNds
+    })
+    setMenu(null)
+  }, [menu, edges, pushState, setNodes])
+
+  const handleZIndex = useCallback((direction) => {
+    if (!menu?.node) return
+    setNodes((nds) => {
+      const target = nds.find(n => n.id === menu.node.id)
+      if (!target) return nds
+      const currentZ = target.zIndex || 0
+      const nextNds = nds.map(n => n.id === target.id ? { ...n, zIndex: currentZ + direction } : n)
+      pushState(nextNds, edges)
+      return nextNds
+    })
+    setMenu(null)
+  }, [menu, edges, pushState, setNodes])
+
+  const onUpdateNode = useCallback((id, updates) => {
+    setNodes(nds => {
+      const nextNds = nds.map(n => n.id === id ? { ...n, data: { ...n.data, ...updates } } : n)
+      pushState(nextNds, edges)
+      return nextNds
+    })
+  }, [edges, pushState, setNodes])
+
+  const onUpdateEdge = useCallback((id, updates) => {
+    setEdges(eds => {
+      const nextEds = eds.map(e => e.id === id ? { ...e, ...updates, style: { ...e.style, ...updates } } : e)
+      pushState(nodes, nextEds)
+      return nextEds
+    })
+  }, [nodes, pushState, setEdges])
+
+  const onSelectionChange = useCallback(({ nodes: selNodes, edges: selEdges }) => {
+    if (selNodes.length === 1) setSelectedNodeId(selNodes[0].id)
+    else setSelectedNodeId(null)
+    
+    if (selEdges.length === 1) setSelectedEdgeId(selEdges[0].id)
+    else setSelectedEdgeId(null)
+  }, [])
 
   return (
     <div id="canvas-tab" className="flex flex-col h-[700px] w-full bg-[#0a0a0f] relative" ref={reactFlowWrapper}>
@@ -116,6 +172,7 @@ export default function CanvasTab({ design }) {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeDragStop={onNodeDragStop}
+        onSelectionChange={onSelectionChange}
         onInit={setReactFlowInstance}
         onPaneContextMenu={onPaneContextMenu}
         onNodeContextMenu={onNodeContextMenu}
@@ -143,10 +200,20 @@ export default function CanvasTab({ design }) {
           </button>
         </Panel>
 
+        <CanvasProperties
+          selectedNode={nodes.find(n => n.id === selectedNodeId)}
+          selectedEdge={edges.find(e => e.id === selectedEdgeId)}
+          onUpdateNode={onUpdateNode}
+          onUpdateEdge={onUpdateEdge}
+        />
+
         {menu && (
           <ContextMenu
             onClick={() => setMenu(null)}
             {...menu}
+            onDuplicate={handleDuplicate}
+            onBringToFront={() => handleZIndex(1)}
+            onSendToBack={() => handleZIndex(-1)}
             onDelete={() => {
               if (menu.id !== 'pane') {
                 setNodes((nds) => {
