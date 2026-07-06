@@ -14,6 +14,7 @@ import { CanvasNodes } from '../diagram/CanvasNodes'
 import CanvasToolbar from '../diagram/CanvasToolbar'
 import ContextMenu from '../diagram/ContextMenu'
 import CanvasProperties from '../diagram/CanvasProperties'
+import IconSearchPanel from '../diagram/IconSearchPanel'
 import { Undo, Redo } from 'lucide-react'
 
 function useHistory(initialNodes, initialEdges) {
@@ -57,6 +58,7 @@ export default function CanvasTab({ design }) {
   const [menu, setMenu] = useState(null)
   const [selectedNodeId, setSelectedNodeId] = useState(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState(null)
+  const [showIconSearch, setShowIconSearch] = useState(false)
   const reactFlowWrapper = useRef(null)
 
   useEffect(() => {
@@ -96,13 +98,23 @@ export default function CanvasTab({ design }) {
     setMenu({ id: node.id, top: event.clientY - bounds.top, left: event.clientX - bounds.left, node })
   }, [])
 
-  const handleAddNode = useCallback((type, position) => {
-    const newNode = {
+  const handleAddNode = useCallback((type, position, iconProps = null) => {
+    let newNode = {
       id: `canvas_${Date.now()}`,
       type: 'resizableShape',
       position,
       data: { shape: type, color: type === 'text' ? 'transparent' : '#1e293b', label: type === 'text' ? 'Text' : 'New Shape' },
     }
+
+    if (iconProps) {
+      newNode = {
+        id: `canvas_${Date.now()}`,
+        type: 'iconNode',
+        position,
+        data: { iconName: iconProps.iconName, label: iconProps.label, color: '#f1f5f9' },
+      }
+    }
+
     setNodes((nds) => {
       const nextNds = nds.concat(newNode)
       pushState(nextNds, edges)
@@ -176,7 +188,10 @@ export default function CanvasTab({ design }) {
         onInit={setReactFlowInstance}
         onPaneContextMenu={onPaneContextMenu}
         onNodeContextMenu={onNodeContextMenu}
-        onPaneClick={() => setMenu(null)}
+        onPaneClick={() => {
+          setMenu(null)
+          setShowIconSearch(false)
+        }}
         nodeTypes={CanvasNodes}
         snapToGrid={true}
         snapGrid={[20, 20]}
@@ -186,19 +201,36 @@ export default function CanvasTab({ design }) {
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#2a2a3d" />
         <Controls showInteractive={false} className="bg-[#12121a] border border-[#2a2a3d]" />
         
-        <Panel position="top-center" className="bg-[#12121a] border border-[#2a2a3d] p-1.5 rounded-xl shadow-xl flex gap-2 items-center">
-          <CanvasToolbar onAddNode={(type) => {
-            const pos = reactFlowInstance?.screenToFlowPosition({ x: 300, y: 200 }) || { x: 100, y: 100 }
-            handleAddNode(type, pos)
-          }} />
-          <div className="w-px h-6 bg-[#2a2a3d]" />
-          <button onClick={undo} disabled={!canUndo} className="p-2 text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-30">
+        {/* Undo/Redo at top-right */}
+        <Panel position="top-right" className="bg-[#12121a] border border-[#2a2a3d] p-1.5 rounded-xl shadow-xl flex gap-1 items-center mt-2 mr-2">
+          <button onClick={undo} disabled={!canUndo} className="p-2 text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-30 transition-colors">
             <Undo size={16} />
           </button>
-          <button onClick={redo} disabled={!canRedo} className="p-2 text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-30">
+          <button onClick={redo} disabled={!canRedo} className="p-2 text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-30 transition-colors">
             <Redo size={16} />
           </button>
         </Panel>
+
+        {/* Vertical Toolbar at left-center */}
+        <Panel position="top-left" className="mt-4 ml-2">
+          <CanvasToolbar 
+            onAddNode={(type) => {
+              const pos = reactFlowInstance?.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }) || { x: 100, y: 100 }
+              handleAddNode(type, pos)
+            }} 
+            onToggleSearch={() => setShowIconSearch(prev => !prev)}
+          />
+        </Panel>
+
+        {showIconSearch && (
+          <IconSearchPanel 
+            onClose={() => setShowIconSearch(false)}
+            onSelect={(iconProps) => {
+              const pos = reactFlowInstance?.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }) || { x: 100, y: 100 }
+              handleAddNode(null, pos, iconProps)
+            }}
+          />
+        )}
 
         <CanvasProperties
           selectedNode={nodes.find(n => n.id === selectedNodeId)}

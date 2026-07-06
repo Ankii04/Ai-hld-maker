@@ -1,6 +1,6 @@
-import { Square, Circle, Diamond, Type } from 'lucide-react'
+import { Square, Circle, Diamond, Type, Search } from 'lucide-react'
 
-export default function CanvasToolbar({ onAddNode }) {
+export default function CanvasToolbar({ onAddNode, onToggleSearch }) {
   const shapes = [
     { type: 'rectangle', icon: Square, label: 'Rectangle' },
     { type: 'circle', icon: Circle, label: 'Circle' },
@@ -9,7 +9,7 @@ export default function CanvasToolbar({ onAddNode }) {
   ]
 
   return (
-    <div className="flex gap-1.5 items-center">
+    <div className="flex flex-col gap-1.5 items-center bg-[#12121a] border border-[#2a2a3d] p-1.5 rounded-xl shadow-xl">
       {shapes.map(({ type, icon: Icon, label }) => (
         <button
           key={type}
@@ -20,6 +20,14 @@ export default function CanvasToolbar({ onAddNode }) {
           <Icon size={16} />
         </button>
       ))}
+      <div className="w-6 h-px bg-[#2a2a3d]" />
+      <button
+        onClick={onToggleSearch}
+        title="Search Tech Logos"
+        className="p-2 rounded-lg text-blue-400 hover:bg-[#1a1a28] hover:text-blue-300 transition-colors"
+      >
+        <Search size={16} />
+      </button>
     </div>
   )
 }

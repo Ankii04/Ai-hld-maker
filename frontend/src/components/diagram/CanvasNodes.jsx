@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { Handle, Position, NodeResizer } from '@xyflow/react'
+import * as SiIcons from 'react-icons/si'
 
 const ResizableShapeNode = memo(({ data, selected }) => {
   const { 
@@ -80,6 +81,36 @@ const ResizableShapeNode = memo(({ data, selected }) => {
   )
 })
 
+const IconNode = memo(({ data, selected }) => {
+  const { iconName, color = '#f1f5f9', label = '' } = data
+  const IconComponent = SiIcons[iconName]
+
+  return (
+    <>
+      <NodeResizer color="#3b82f6" isVisible={selected} minWidth={30} minHeight={30} keepAspectRatio />
+      <Handle type="target" position={Position.Top} className="w-2 h-2 !bg-blue-400 opacity-0 group-hover:opacity-100" />
+      <div className="w-full h-full flex flex-col items-center justify-center group relative p-1">
+        {IconComponent ? (
+          <IconComponent className="w-full h-full" style={{ color }} />
+        ) : (
+          <div className="w-full h-full bg-[#1e293b] rounded-lg border border-red-500/50 flex items-center justify-center text-[10px] text-red-400">
+            ?
+          </div>
+        )}
+        {label && (
+          <span className="absolute -bottom-5 text-[10px] whitespace-nowrap text-[#94a3b8]" style={{ color }}>
+            {label}
+          </span>
+        )}
+      </div>
+      <Handle type="source" position={Position.Bottom} className="w-2 h-2 !bg-blue-400 opacity-0 group-hover:opacity-100" />
+      <Handle type="source" position={Position.Left} id="left" className="w-2 h-2 !bg-blue-400 opacity-0 group-hover:opacity-100" />
+      <Handle type="source" position={Position.Right} id="right" className="w-2 h-2 !bg-blue-400 opacity-0 group-hover:opacity-100" />
+    </>
+  )
+})
+
 export const CanvasNodes = {
   resizableShape: ResizableShapeNode,
+  iconNode: IconNode,
 }
