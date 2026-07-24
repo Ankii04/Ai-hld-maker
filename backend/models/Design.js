@@ -160,6 +160,17 @@ const designSchema = new Schema(
       default: false,
     },
 
+    starred: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Free-form whiteboard state (Canvas tab): { nodes: [], edges: [] }
+    canvas: {
+      type: Schema.Types.Mixed,
+      default: null,
+    },
+
     shareId: {
       type: String,
       unique: true,

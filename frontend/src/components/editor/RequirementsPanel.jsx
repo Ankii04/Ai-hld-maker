@@ -3,7 +3,6 @@ import {
   Sparkles,
   Zap,
   ChevronDown,
-  CheckCircle2,
   Loader2,
   User,
   ChevronLeft,
@@ -13,15 +12,6 @@ const TECH_OPTIONS = [
   'React', 'Vue', 'Angular', 'Node.js', 'Python', 'Go', 'Java',
   'PostgreSQL', 'MongoDB', 'Redis', 'Kafka', 'RabbitMQ',
   'AWS', 'GCP', 'Azure', 'Docker', 'Kubernetes', 'Elasticsearch',
-]
-
-const GENERATION_STEPS = [
-  'Analyzing requirements...',
-  'Designing architecture...',
-  'Creating database schema...',
-  'Generating API contracts...',
-  'Building Scalability guidelines...',
-  'Finalizing...',
 ]
 
 const SCALE_OPTIONS = ['Startup', 'Mid-scale', 'Enterprise']
@@ -34,7 +24,7 @@ export default function RequirementsPanel({
   isGenerating = false,
   isChallenging = false,
   currentDesign = null,
-  generationStep = 0,
+  generationStartedAt = null,
   user = null,
   onToggleCollapse,
 }) {
@@ -45,6 +35,21 @@ export default function RequirementsPanel({
   const [expectedUsers, setExpectedUsers] = useState('< 1K')
   const [selectedTechs, setSelectedTechs] = useState([])
   const [usersOpen, setUsersOpen] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+
+  // Honest elapsed-time readout while generating — no fake step checklist
+  // that loops back to "Analyzing requirements..." on any run slower than
+  // a few seconds (real generations take 45-90s).
+  useEffect(() => {
+    if (!isGenerating || !generationStartedAt) {
+      setElapsedSeconds(0)
+      return
+    }
+    const tick = () => setElapsedSeconds(Math.floor((Date.now() - generationStartedAt) / 1000))
+    tick()
+    const interval = setInterval(tick, 1000)
+    return () => clearInterval(interval)
+  }, [isGenerating, generationStartedAt])
 
   useEffect(() => {
     if (currentDesign) {
@@ -115,7 +120,7 @@ export default function RequirementsPanel({
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
             placeholder="e.g. Uber for Pets"
-            className="w-full bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] placeholder-[#4a4a6a] focus:outline-none focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]/30 transition-colors"
+            className="w-full bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] placeholder-[#64748b] focus:outline-none focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]/30 transition-colors"
           />
         </div>
 
@@ -129,7 +134,7 @@ export default function RequirementsPanel({
             onChange={(e) => setRequirements(e.target.value)}
             placeholder="Describe your system requirements..."
             rows={6}
-            className="w-full h-48 bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] placeholder-[#4a4a6a] focus:outline-none focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]/30 transition-colors resize-none leading-relaxed"
+            className="w-full h-48 bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] placeholder-[#64748b] focus:outline-none focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]/30 transition-colors resize-none leading-relaxed"
           />
         </div>
 
@@ -146,7 +151,7 @@ export default function RequirementsPanel({
                 className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-all ${
                   scale === opt
                     ? 'bg-[#3b82f6]/20 border-[#3b82f6] text-[#3b82f6]'
-                    : 'bg-[#1a1a28] border-[#2a2a3d] text-[#94a3b8] hover:border-[#4a4a6a] hover:text-[#f1f5f9]'
+                    : 'bg-[#1a1a28] border-[#2a2a3d] text-[#94a3b8] hover:border-[#3a3a55] hover:text-[#f1f5f9]'
                 }`}
               >
                 {opt}
@@ -168,7 +173,7 @@ export default function RequirementsPanel({
                 className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-all ${
                   budget === opt
                     ? 'bg-[#8b5cf6]/20 border-[#8b5cf6] text-[#8b5cf6]'
-                    : 'bg-[#1a1a28] border-[#2a2a3d] text-[#94a3b8] hover:border-[#4a4a6a] hover:text-[#f1f5f9]'
+                    : 'bg-[#1a1a28] border-[#2a2a3d] text-[#94a3b8] hover:border-[#3a3a55] hover:text-[#f1f5f9]'
                 }`}
               >
                 {opt}
@@ -185,7 +190,7 @@ export default function RequirementsPanel({
           <div className="relative">
             <button
               onClick={() => setUsersOpen((v) => !v)}
-              className="w-full bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] flex items-center justify-between focus:outline-none focus:border-[#3b82f6] hover:border-[#4a4a6a] transition-colors"
+              className="w-full bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] flex items-center justify-between focus:outline-none focus:border-[#3b82f6] hover:border-[#3a3a55] transition-colors"
             >
               <span>{expectedUsers}</span>
               <ChevronDown
@@ -231,7 +236,7 @@ export default function RequirementsPanel({
                   className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
                     isSelected
                       ? 'bg-[#3b82f6]/20 border-[#3b82f6] text-[#3b82f6]'
-                      : 'bg-[#1a1a28] border-[#2a2a3d] text-[#94a3b8] hover:border-[#4a4a6a] hover:text-[#f1f5f9]'
+                      : 'bg-[#1a1a28] border-[#2a2a3d] text-[#94a3b8] hover:border-[#3a3a55] hover:text-[#f1f5f9]'
                   }`}
                 >
                   {tech}
@@ -260,45 +265,29 @@ export default function RequirementsPanel({
                   {usageCount}/3
                 </span>
               </div>
-              <p className="text-[10px] text-[#4a4a6a] mt-0.5">designs this month</p>
+              <p className="text-[11px] text-[#94a3b8] mt-0.5">designs this month</p>
             </div>
           </div>
         )}
 
-        {/* Generation Progress */}
+        {/* Generation Progress — honest indeterminate state. This panel
+            carries the app's ONE glow: the purple AI-generating pulse. */}
         {isGenerating && (
-          <div className="bg-[#1a1a28] border border-[#3b82f6]/30 rounded-lg p-4 space-y-2">
-            <p className="text-xs font-semibold text-[#3b82f6] mb-3 uppercase tracking-wider">
-              Generating…
+          <div className="ai-glow bg-[#1a1a28] border border-[#8b5cf6]/50 rounded-lg p-4">
+            <div className="flex items-center gap-2.5 mb-2">
+              <Loader2 size={16} className="text-[#a78bfa] animate-spin flex-shrink-0" />
+              <p className="text-[11px] font-semibold text-[#a78bfa] uppercase tracking-wider">
+                Generating architecture…
+              </p>
+              <span className="ml-auto text-xs font-mono text-[#94a3b8]">
+                {String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:
+                {String(elapsedSeconds % 60).padStart(2, '0')}
+              </span>
+            </div>
+            <p className="text-xs text-[#94a3b8] leading-relaxed">
+              Gemini is drafting your HLD, LLD, database schema, API contracts, and scalability
+              guide. This typically takes 45–90 seconds.
             </p>
-            {GENERATION_STEPS.map((step, idx) => {
-              const isDone = idx < generationStep
-              const isActive = idx === generationStep
-              return (
-                <div key={step} className="flex items-center gap-2.5">
-                  <div className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
-                    {isDone ? (
-                      <CheckCircle2 size={14} className="text-[#16a34a]" />
-                    ) : isActive ? (
-                      <Loader2 size={14} className="text-[#3b82f6] animate-spin" />
-                    ) : (
-                      <div className="w-3 h-3 rounded-full border border-[#2a2a3d]" />
-                    )}
-                  </div>
-                  <span
-                    className={`text-xs transition-colors ${
-                      isDone
-                        ? 'text-[#4a4a6a] line-through'
-                        : isActive
-                        ? 'text-[#f1f5f9] font-medium'
-                        : 'text-[#4a4a6a]'
-                    }`}
-                  >
-                    {step}
-                  </span>
-                </div>
-              )
-            })}
           </div>
         )}
       </div>
@@ -308,7 +297,9 @@ export default function RequirementsPanel({
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !requirements.trim()}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-semibold text-sm bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white shadow-lg shadow-[#3b82f6]/20 hover:shadow-[#3b82f6]/40 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+          className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-semibold text-sm bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+            isGenerating ? 'ai-glow' : ''
+          }`}
         >
           {isGenerating ? (
             <Loader2 size={16} className="animate-spin" />
@@ -321,12 +312,12 @@ export default function RequirementsPanel({
         <button
           onClick={onChallenge}
           disabled={!hasDesign || isChallenging || isGenerating}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-semibold text-sm bg-gradient-to-r from-[#d97706] to-[#ea580c] text-white shadow-lg shadow-[#d97706]/20 hover:shadow-[#d97706]/40 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+          className="btn btn-secondary w-full"
         >
           {isChallenging ? (
             <Loader2 size={16} className="animate-spin" />
           ) : (
-            <Zap size={16} />
+            <Zap size={16} className="text-[#f59e0b]" />
           )}
           {isChallenging ? 'Challenging…' : 'Challenge My Design'}
         </button>

@@ -50,12 +50,12 @@ export default function PublicShare({ shareId: propShareId, readOnly }) {
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'HLD': return <HLDTab design={design} />
+      case 'HLD': return <HLDTab design={design} readOnly />
       case 'LLD': return <LLDTab design={design} />
       case 'Database': return <DatabaseTab design={design} />
       case 'APIs': return <APITab design={design} />
       case 'Scalability': return <ScalabilityTab design={design} />
-      default: return <HLDTab design={design} />
+      default: return <HLDTab design={design} readOnly />
     }
   }
 
@@ -69,7 +69,7 @@ export default function PublicShare({ shareId: propShareId, readOnly }) {
             <span className="font-bold font-heading bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               ArchMind
             </span>
-            <span className="hidden sm:inline text-[#4a5568] text-sm">/</span>
+            <span className="hidden sm:inline text-[#94a3b8] text-sm">/</span>
             <span className="hidden sm:inline text-[#94a3b8] text-sm truncate max-w-[200px]">{design?.title}</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1a1a28] border border-[#2a2a3d]">
@@ -105,7 +105,7 @@ export default function PublicShare({ shareId: propShareId, readOnly }) {
 
       {/* Footer */}
       <div className="border-t border-[#2a2a3d] py-4 text-center">
-        <p className="text-[#4a5568] text-xs">
+        <p className="text-[#94a3b8] text-xs">
           Shared via <Link to="/" className="text-[#3b82f6] hover:underline">ArchMind</Link> · AI-powered System Design Generator
         </p>
       </div>

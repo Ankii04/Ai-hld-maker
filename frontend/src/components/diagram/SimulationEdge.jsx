@@ -128,7 +128,7 @@ export default function SimulationEdge({
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               pointerEvents: 'all',
             }}
-            className={`px-2.5 py-1 rounded-lg border text-[9px] font-bold font-mono shadow-2xl backdrop-blur-md whitespace-nowrap z-[999] animate-fade-in transition-all duration-300 ${
+            className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold font-mono shadow-2xl backdrop-blur-md whitespace-nowrap z-[999] animate-fade-in transition-all duration-300 ${
               state === 'walkthrough-forward'
                 ? 'bg-[#12121a]/95 border-purple-500/50 text-[#c084fc] shadow-purple-900/10'
                 : 'bg-[#12121a]/95 border-green-500/50 text-green-400 shadow-green-900/10'

@@ -1,17 +1,15 @@
-import { useMemo } from 'react'
-import { Users, Zap, Layers, Globe, GitBranch, HardDrive, AlertTriangle, Shield, Eye, AlertCircle, RefreshCw } from 'lucide-react'
+import { Users, Zap, Layers, Globe, GitBranch, HardDrive, AlertTriangle, Shield, Eye, AlertCircle, Gauge } from 'lucide-react'
+import { Overline, TabHeader, Panel, PanelHeader, TabShell, TabEmpty } from './Section'
 
 /* ─── Stat Card ─────────────────────────────────────────────────────────── */
 function StatCard({ icon: Icon, iconColor, label, value, sub }) {
   return (
-    <div className="flex-1 bg-[#12121a] border border-[#2a2a3d] rounded-xl p-5 min-w-0">
+    <Panel className="flex-1 min-w-0">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-1">
-            {label}
-          </p>
+          <Overline className="block mb-1">{label}</Overline>
           <p className="text-2xl font-bold text-[#f1f5f9] leading-none">{value}</p>
-          {sub && <p className="text-xs text-[#4a4a6a] mt-1">{sub}</p>}
+          {sub && <p className="text-[12px] text-[#94a3b8] mt-1">{sub}</p>}
         </div>
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -20,46 +18,38 @@ function StatCard({ icon: Icon, iconColor, label, value, sub }) {
           <Icon size={18} style={{ color: iconColor }} />
         </div>
       </div>
-    </div>
+    </Panel>
   )
 }
 
 /* ─── Cache Layer Card ──────────────────────────────────────────────────── */
 function CacheLayerCard({ layer, technology, strategy, color }) {
   return (
-    <div
-      className="flex-1 bg-[#12121a] border border-[#2a2a3d] rounded-xl p-4 min-w-0"
+    <Panel
+      className="flex-1 min-w-0"
       style={{ borderTopColor: color, borderTopWidth: 2 }}
     >
       <div className="flex items-center gap-2 mb-3">
         <div
-          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+          className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold"
           style={{ background: `${color}22`, color }}
         >
           {layer}
         </div>
-        <span className="text-xs font-bold text-[#f1f5f9]">{technology}</span>
+        <span className="font-heading text-[14px] font-semibold text-[#f1f5f9]">{technology}</span>
       </div>
-      <p className="text-xs text-[#94a3b8] leading-relaxed">{strategy}</p>
-    </div>
+      <p className="text-[12px] text-[#94a3b8] leading-relaxed">{strategy}</p>
+    </Panel>
   )
 }
 
 /* ─── Info Banner ────────────────────────────────────────────────────────── */
 function InfoBanner({ icon: Icon, iconColor, title, content }) {
   return (
-    <div className="bg-[#12121a] border border-[#2a2a3d] rounded-xl p-5">
-      <div className="flex items-center gap-3 mb-2">
-        <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: `${iconColor}18` }}
-        >
-          <Icon size={16} style={{ color: iconColor }} />
-        </div>
-        <h3 className="text-sm font-bold text-[#f1f5f9]">{title}</h3>
-      </div>
-      <p className="text-sm text-[#94a3b8] leading-relaxed ml-11">{content}</p>
-    </div>
+    <Panel className="flex flex-col gap-3">
+      <PanelHeader icon={Icon} tone={iconColor} title={title} />
+      <p className="text-[13px] text-[#94a3b8] leading-relaxed ml-[42px]">{content}</p>
+    </Panel>
   )
 }
 
@@ -91,68 +81,76 @@ function ScaleMeter({ estimatedUsers, stressPoints = [] }) {
   const fillPercent = userCountToPercent(userNum)
 
   return (
-    <div className="bg-[#12121a] border border-[#2a2a3d] rounded-xl p-6">
-      <h3 className="text-sm font-bold text-[#f1f5f9] mb-1">Scale Capacity Meter</h3>
-      <p className="text-xs text-[#94a3b8] mb-5">
-        Your system handles up to{' '}
-        <span className="text-[#f1f5f9] font-semibold">{estimatedUsers || 'N/A'}</span> users.
-        {stressPoints.length > 0 && " Here's what breaks next:"}
-      </p>
+    <Panel className="flex flex-col gap-4">
+      <PanelHeader
+        icon={Gauge}
+        tone="#3b82f6"
+        title="Scale Capacity Meter"
+        description={
+          <>
+            Your system handles up to{' '}
+            <span className="text-[#f1f5f9] font-semibold">{estimatedUsers || 'N/A'}</span> users.
+            {stressPoints.length > 0 && " Here's what breaks next:"}
+          </>
+        }
+      />
 
-      {/* Track */}
-      <div className="relative mb-3">
-        <div className="w-full h-5 bg-[#1a1a28] border border-[#2a2a3d] rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{
-              width: `${fillPercent}%`,
-              background: `linear-gradient(90deg, #16a34a, #d97706 70%, #dc2626)`,
-              boxShadow: '0 0 12px rgba(59, 130, 246, 0.4)',
-            }}
-          />
+      <div className="flex flex-col gap-3">
+        {/* Track */}
+        <div className="relative">
+          <div className="w-full h-5 bg-[#1a1a28] border border-[#2a2a3d] rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${fillPercent}%`,
+                background: `linear-gradient(90deg, #16a34a, #d97706 70%, #dc2626)`,
+                boxShadow: '0 0 12px rgba(59, 130, 246, 0.4)',
+              }}
+            />
+          </div>
+
+          {/* Stress point markers */}
+          {stressPoints.map((sp, i) => {
+            const pct = userCountToPercent(parseUserCount(sp.at))
+            return (
+              <div
+                key={i}
+                className="absolute top-0 transform -translate-x-1/2"
+                style={{ left: `${pct}%` }}
+                title={sp.issue}
+              >
+                <div className="w-0.5 h-5 bg-[#f97316]" />
+                <AlertTriangle size={10} className="text-[#f97316] mt-0.5 -ml-1.5" />
+              </div>
+            )
+          })}
         </div>
 
-        {/* Stress point markers */}
-        {stressPoints.map((sp, i) => {
-          const pct = userCountToPercent(parseUserCount(sp.at))
-          return (
-            <div
-              key={i}
-              className="absolute top-0 transform -translate-x-1/2"
-              style={{ left: `${pct}%` }}
-              title={sp.issue}
-            >
-              <div className="w-0.5 h-5 bg-[#f97316]" />
-              <AlertTriangle size={10} className="text-[#f97316] mt-0.5 -ml-1.5" />
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Tick labels */}
-      <div className="relative flex justify-between px-0 mb-5">
-        {USER_TICKS.map(({ label }) => (
-          <span key={label} className="text-[10px] text-[#4a4a6a]">
-            {label}
-          </span>
-        ))}
+        {/* Tick labels */}
+        <div className="relative flex justify-between px-0">
+          {USER_TICKS.map(({ label }) => (
+            <span key={label} className="text-[11px] text-[#64748b]">
+              {label}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Stress points list */}
       {stressPoints.length > 0 && (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-3">
           {stressPoints.map((sp, i) => (
             <div key={i} className="flex items-start gap-3 bg-[#1a1a28] rounded-lg p-3">
               <AlertTriangle size={13} className="text-[#f97316] flex-shrink-0 mt-0.5" />
               <div>
-                <span className="text-xs font-semibold text-[#fbbf24]">At {sp.at}: </span>
-                <span className="text-xs text-[#94a3b8]">{sp.issue}</span>
+                <span className="text-[12px] font-semibold text-[#fbbf24]">At {sp.at}: </span>
+                <span className="text-[12px] text-[#94a3b8]">{sp.issue}</span>
               </div>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </Panel>
   )
 }
 
@@ -168,14 +166,21 @@ export default function ScalabilityTab({ design }) {
 
   if (!design) {
     return (
-      <div className="flex items-center justify-center h-64 text-[#4a4a6a] text-sm p-6">
-        Generate a design to see scalability analysis
-      </div>
+      <TabEmpty
+        icon={Gauge}
+        title="No scalability analysis yet"
+        description="Generate a design to see scalability analysis"
+      />
     )
   }
 
   return (
-    <div id="scalability-tab" className="flex flex-col gap-6 p-6">
+    <TabShell id="scalability-tab">
+      <TabHeader
+        title="Scalability & Resilience"
+        description="Capacity estimates, caching, traffic distribution, and failure posture"
+      />
+
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard
@@ -195,11 +200,13 @@ export default function ScalabilityTab({ design }) {
       </div>
 
       {/* Caching Layers */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Layers size={15} className="text-[#06b6d4]" />
-          <h3 className="text-sm font-bold text-[#f1f5f9]">Caching Layers</h3>
-        </div>
+      <div className="flex flex-col gap-4">
+        <PanelHeader
+          icon={Layers}
+          tone="#06b6d4"
+          title="Caching Layers"
+          description="Tiered cache strategy from application memory out to the edge"
+        />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {cacheLayers.map((layer) => (
             <CacheLayerCard key={layer.layer} {...layer} />
@@ -239,105 +246,96 @@ export default function ScalabilityTab({ design }) {
 
       {/* Failure Handling */}
       {design.failureHandling?.length > 0 && (
-        <div className="bg-[#12121a] border border-[#2a2a3d] rounded-2xl p-5">
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
-              <AlertCircle size={15} className="text-red-400" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-[#f1f5f9] font-heading">Resilience & Failure Handling</h3>
-              <p className="text-xs text-[#94a3b8]">Scenarios, circuit breakers, and automatic mitigation policies</p>
-            </div>
-          </div>
+        <Panel className="flex flex-col gap-4">
+          <PanelHeader
+            icon={AlertCircle}
+            tone="#f87171"
+            title="Resilience & Failure Handling"
+            description="Scenarios, circuit breakers, and automatic mitigation policies"
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {design.failureHandling.map((fh, idx) => (
               <div key={idx} className="bg-[#1a1a28] border border-[#2a2a3d] rounded-xl p-4 hover:border-red-500/20 transition-all duration-200">
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-xs font-bold text-red-400 font-heading">
+                  <span className="text-[13px] font-bold text-red-400 font-heading">
                     {fh.scenario}
                   </span>
-                  <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-wider font-mono">
+                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-wider font-mono">
                     {fh.strategy}
                   </span>
                 </div>
-                <p className="text-xs text-[#94a3b8] leading-relaxed mb-2 font-sans">
+                <p className="text-[12px] text-[#94a3b8] leading-relaxed mb-2 font-sans">
                   <strong className="text-[#e2e8f0]">Mitigation:</strong> {fh.mitigation}
                 </p>
                 {fh.details && (
-                  <p className="text-[11px] text-[#4a4a6a] leading-relaxed bg-[#12121a] p-2 rounded border border-[#2a2a3d]/50 font-mono">
+                  <p className="text-[12px] text-[#94a3b8] leading-relaxed bg-[#12121a] p-2 rounded border border-[#2a2a3d]/50 font-mono">
                     {fh.details}
                   </p>
                 )}
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
       )}
 
       {/* Security */}
       {design.security?.length > 0 && (
-        <div className="bg-[#12121a] border border-[#2a2a3d] rounded-2xl p-5">
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-              <Shield size={15} className="text-green-400" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-[#f1f5f9] font-heading">Security & Threat Controls</h3>
-              <p className="text-xs text-[#94a3b8]">Threat modeling, network isolation, and encryption configurations</p>
-            </div>
-          </div>
+        <Panel className="flex flex-col gap-4">
+          <PanelHeader
+            icon={Shield}
+            tone="#4ade80"
+            title="Security & Threat Controls"
+            description="Threat modeling, network isolation, and encryption configurations"
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {design.security.map((sec, idx) => (
               <div key={idx} className="bg-[#1a1a28] border border-[#2a2a3d] rounded-xl p-4 hover:border-green-500/20 transition-all duration-200">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-bold text-green-400 font-heading">
+                  <span className="text-[13px] font-bold text-green-400 font-heading">
                     {sec.threat}
                   </span>
                 </div>
-                <p className="text-xs text-[#94a3b8] leading-relaxed mb-2 font-sans">
+                <p className="text-[12px] text-[#94a3b8] leading-relaxed mb-2 font-sans">
                   <strong className="text-[#e2e8f0]">Control measure:</strong> {sec.control}
                 </p>
                 {sec.implementation && (
-                  <div className="text-[11px] text-[#94a3b8] bg-[#12121a] p-2 rounded border border-green-500/10 font-sans leading-relaxed">
+                  <div className="text-[12px] text-[#94a3b8] bg-[#12121a] p-2 rounded border border-green-500/10 font-sans leading-relaxed">
                     <strong className="text-green-400 font-mono">Implementation:</strong> {sec.implementation}
                   </div>
                 )}
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
       )}
 
       {/* Observability */}
       {design.observability?.length > 0 && (
-        <div className="bg-[#12121a] border border-[#2a2a3d] rounded-2xl p-5">
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-              <Eye size={15} className="text-blue-400" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-[#f1f5f9] font-heading">Observability & Telemetry</h3>
-              <p className="text-xs text-[#94a3b8]">Metrics collection, logging infrastructure, and alerting runbooks</p>
-            </div>
-          </div>
+        <Panel className="flex flex-col gap-4">
+          <PanelHeader
+            icon={Eye}
+            tone="#60a5fa"
+            title="Observability & Telemetry"
+            description="Metrics collection, logging infrastructure, and alerting runbooks"
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {design.observability.map((obs, idx) => (
               <div key={idx} className="bg-[#1a1a28] border border-[#2a2a3d] rounded-xl p-4 hover:border-blue-500/20 transition-all duration-200">
                 <div className="border-b border-[#2a2a3d] pb-2 mb-2 flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#f1f5f9] font-mono">
+                  <span className="text-[13px] font-bold text-[#f1f5f9] font-mono">
                     Tier: {obs.component}
                   </span>
-                  <span className="text-[9px] bg-blue-500/15 text-blue-400 px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider">
+                  <span className="text-[11px] bg-blue-500/15 text-blue-400 px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider">
                     TELEMETRY
                   </span>
                 </div>
-                
+
                 {obs.metrics?.length > 0 && (
                   <div className="mb-2">
-                    <span className="text-[10px] font-bold text-[#4a4a6a] uppercase tracking-wider">Key Metrics:</span>
+                    <Overline>Key Metrics:</Overline>
                     <div className="flex gap-1 flex-wrap mt-1">
                       {obs.metrics.map((m, mIdx) => (
-                        <span key={mIdx} className="text-[10px] bg-[#12121a] border border-[#2a2a3d] px-2 py-0.5 rounded text-[#94a3b8] font-mono">
+                        <span key={mIdx} className="text-[11px] bg-[#12121a] border border-[#2a2a3d] px-2 py-0.5 rounded text-[#94a3b8] font-mono">
                           {m}
                         </span>
                       ))}
@@ -346,17 +344,17 @@ export default function ScalabilityTab({ design }) {
                 )}
 
                 {obs.logging && (
-                  <p className="text-xs text-[#94a3b8] leading-relaxed mb-2 font-sans">
+                  <p className="text-[12px] text-[#94a3b8] leading-relaxed mb-2 font-sans">
                     <strong className="text-[#e2e8f0]">Logging Policy:</strong> {obs.logging}
                   </p>
                 )}
 
                 {obs.alerts?.length > 0 && (
                   <div className="bg-[#12121a] border border-[#2a2a3d]/50 p-2.5 rounded-lg">
-                    <span className="text-[9px] font-bold text-[#f59e0b] uppercase tracking-wider block mb-1">Trigger Alerts:</span>
+                    <Overline className="block mb-1 !text-[#f59e0b]">Trigger Alerts:</Overline>
                     <ul className="list-disc pl-4 space-y-1">
                       {obs.alerts.map((a, aIdx) => (
-                        <li key={aIdx} className="text-[11px] text-[#94a3b8] leading-relaxed">{a}</li>
+                        <li key={aIdx} className="text-[12px] text-[#94a3b8] leading-relaxed">{a}</li>
                       ))}
                     </ul>
                   </div>
@@ -364,8 +362,8 @@ export default function ScalabilityTab({ design }) {
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
       )}
-    </div>
+    </TabShell>
   )
 }

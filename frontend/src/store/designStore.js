@@ -3,54 +3,21 @@ import api from '../utils/api'
 import useAuthStore from './authStore'
 import { toast } from 'react-hot-toast'
 
-/**
- * Generation step messages — shown in the UI as progress feedback
- * while the AI is building the design.
- */
-const GENERATION_STEPS = [
-  'Analysing requirements…',
-  'Designing high-level architecture…',
-  'Mapping service boundaries…',
-  'Generating component diagram…',
-  'Drafting low-level design…',
-  'Defining database schemas…',
-  'Specifying API contracts…',
-  'Building Scalability guidelines…',
-  'Running architecture challenge…',
-  'Finalising blueprint…',
-]
-
 const useDesignStore = create((set, get) => ({
   /* ─── State ────────────────────────────────────────────── */
   designs: [],
   currentDesign: null,
   versions: [],
   isLoading: false,
+  isSaving: false,
   isGenerating: false,
   isChallenging: false,
   error: null,
-  generationStep: '',
-  generationStepIndex: 0,
-  _stepTimer: null,
-
-  /* ─── Internal helpers ────────────────────────────────── */
-  _startStepCycle: () => {
-    let idx = 0
-    set({ generationStep: GENERATION_STEPS[0], generationStepIndex: 0 })
-    const timer = setInterval(() => {
-      idx = (idx + 1) % GENERATION_STEPS.length
-      set({ generationStep: GENERATION_STEPS[idx], generationStepIndex: idx })
-    }, 3200)
-    set({ _stepTimer: timer })
-  },
-
-  _stopStepCycle: () => {
-    const { _stepTimer } = get()
-    if (_stepTimer) {
-      clearInterval(_stepTimer)
-      set({ _stepTimer: null, generationStep: '', generationStepIndex: 0 })
-    }
-  },
+  // Timestamp generation started — the UI derives an honest elapsed-time
+  // readout from this instead of a fake step checklist that used to loop
+  // back to "Analysing requirements…" every ~19s on any generation slower
+  // than that (nearly all of them; a real generation takes 45–90s).
+  generationStartedAt: null,
 
   /* ─── Fetch all designs for the current user ──────────── */
   fetchDesigns: async () => {
@@ -98,9 +65,12 @@ const useDesignStore = create((set, get) => ({
     }
   },
 
-  /* ─── Update a design (title, requirements, etc.) ────── */
+  /* ─── Update a design (title, requirements, etc.) ──────
+   * Uses `isSaving`, NOT `isLoading` — the editor shell renders a full
+   * LoadingScreen (unmounting every tab + its local state) whenever
+   * `isLoading` flips, so a plain autosave/title-edit must never touch it. */
   updateDesign: async (id, updates) => {
-    set({ isLoading: true, error: null })
+    set({ isSaving: true, error: null })
     try {
       const data = await api.put(`/designs/${id}`, updates)
       const updated = data?.data ?? data?.design ?? data
@@ -108,11 +78,48 @@ const useDesignStore = create((set, get) => ({
         designs: state.designs.map((d) => (d._id === id || d.id === id ? updated : d)),
         currentDesign:
           state.currentDesign?._id === id || state.currentDesign?.id === id ? updated : state.currentDesign,
-        isLoading: false,
+        isSaving: false,
       }))
       return { success: true, design: updated }
     } catch (err) {
-      set({ isLoading: false, error: err.message })
+      set({ isSaving: false, error: err.message })
+      return { success: false, message: err.message }
+    }
+  },
+
+  /* ─── Toggle starred flag (optimistic) ────────────────── */
+  toggleStarred: async (id, nextStarred) => {
+    set((state) => ({
+      designs: state.designs.map((d) =>
+        (d._id === id || d.id === id) ? { ...d, starred: nextStarred } : d
+      ),
+    }))
+    try {
+      await api.put(`/designs/${id}`, { starred: nextStarred })
+      return { success: true }
+    } catch (err) {
+      // Revert on failure
+      set((state) => ({
+        designs: state.designs.map((d) =>
+          (d._id === id || d.id === id) ? { ...d, starred: !nextStarred } : d
+        ),
+      }))
+      return { success: false, message: err.message }
+    }
+  },
+
+  /* ─── Persist Canvas tab whiteboard state (debounced by caller) ───────── */
+  saveCanvas: async (id, canvas) => {
+    try {
+      await api.put(`/designs/${id}`, { canvas })
+      set((state) => ({
+        currentDesign:
+          state.currentDesign?._id === id || state.currentDesign?.id === id
+            ? { ...state.currentDesign, canvas }
+            : state.currentDesign,
+      }))
+      return { success: true }
+    } catch (err) {
       return { success: false, message: err.message }
     }
   },
@@ -137,30 +144,30 @@ const useDesignStore = create((set, get) => ({
 
   /* ─── AI Generate — triggers full blueprint generation ── */
   generateDesign: async (id, inputs) => {
-    set({ isGenerating: true, error: null })
-    get()._startStepCycle()
+    set({ isGenerating: true, error: null, generationStartedAt: Date.now() })
 
-    const coldStartTimer = setTimeout(() => {
-      toast.loading('Standing by: The backend server is waking up. This can take up to 60 seconds...', {
-        id: 'cold-start-warning',
+    // A real Gemini generation genuinely takes ~45–90s — this isn't just a
+    // cold-start message, it's honest reassurance that a long wait is normal.
+    const slowRequestTimer = setTimeout(() => {
+      toast.loading("Still working — AI blueprint generation typically takes 45–90 seconds.", {
+        id: 'slow-generation-notice',
       })
-    }, 6000)
+    }, 20000)
 
     try {
       const data = await api.post(
         `/designs/${id}/generate`,
         inputs,
       )
-      clearTimeout(coldStartTimer)
-      toast.dismiss('cold-start-warning')
+      clearTimeout(slowRequestTimer)
+      toast.dismiss('slow-generation-notice')
       const design = data?.data ?? data?.design ?? data
 
-      get()._stopStepCycle()
       set((state) => ({
         currentDesign: design,
         designs: state.designs.map((d) => (d._id === id || d.id === id ? design : d)),
         isGenerating: false,
-        generationStep: 'Complete!',
+        generationStartedAt: null,
       }))
 
       // Refresh fresh user details (includes designsGeneratedThisMonth count)
@@ -168,16 +175,12 @@ const useDesignStore = create((set, get) => ({
         await useAuthStore.getState().fetchMe()
       } catch (_) {}
 
-      // Clear the 'Complete!' message after a brief delay
-      setTimeout(() => set({ generationStep: '' }), 1500)
-
       return { success: true, design }
     } catch (err) {
-      clearTimeout(coldStartTimer)
-      toast.dismiss('cold-start-warning')
-      get()._stopStepCycle()
-      set({ isGenerating: false, error: err.message })
-      return { success: false, message: err.message }
+      clearTimeout(slowRequestTimer)
+      toast.dismiss('slow-generation-notice')
+      set({ isGenerating: false, error: err.message, generationStartedAt: null })
+      return { success: false, message: err.message, code: err.data?.error }
     }
   },
 
@@ -203,7 +206,7 @@ const useDesignStore = create((set, get) => ({
       return { success: true }
     } catch (err) {
       set({ isChallenging: false, error: err.message })
-      return { success: false, message: err.message }
+      return { success: false, message: err.message, code: err.data?.error }
     }
   },
 
@@ -228,7 +231,7 @@ const useDesignStore = create((set, get) => ({
       })
       return { success: true, shareId }
     } catch (err) {
-      return { success: false, message: err.message }
+      return { success: false, message: err.message, code: err.data?.error }
     }
   },
 
@@ -308,33 +311,33 @@ const useDesignStore = create((set, get) => ({
 
   /* ─── Commit/Snapshot current design state ────────────── */
   commitVersion: async (designId, commitMessage) => {
-    set({ isLoading: true })
+    set({ isSaving: true })
     try {
       const data = await api.post(`/designs/${designId}/commit`, { commitMessage })
       const snapshot = data?.data || data
       set((state) => ({
         versions: [snapshot, ...state.versions],
-        isLoading: false,
+        isSaving: false,
       }))
       return { success: true, snapshot }
     } catch (err) {
-      set({ isLoading: false })
+      set({ isSaving: false })
       return { success: false, message: err.message }
     }
   },
 
   /* ─── Rollback current design state to version ────────── */
   rollbackVersion: async (designId, versionId) => {
-    set({ isLoading: true })
+    set({ isSaving: true })
     try {
       const data = await api.post(`/designs/${designId}/versions/${versionId}/rollback`)
       const updatedDesign = data?.data ?? data
-      set({ currentDesign: updatedDesign, isLoading: false })
+      set({ currentDesign: updatedDesign, isSaving: false })
       // Refresh version list to include the rollback commit
       await get().fetchVersions(designId)
       return { success: true, design: updatedDesign }
     } catch (err) {
-      set({ isLoading: false })
+      set({ isSaving: false })
       return { success: false, message: err.message }
     }
   },

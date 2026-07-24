@@ -96,7 +96,7 @@ const LeftPanel = () => (
     {/* Bottom tagline */}
     <div className="absolute bottom-8 left-0 right-0 text-center">
       <p className="text-[#94a3b8] text-xs font-mono">
-        Trusted by engineers at <span className="text-purple-400">startups & enterprises.</span>
+        Built for <span className="text-purple-400">engineers who ship fast.</span>
       </p>
     </div>
   </div>
@@ -137,8 +137,19 @@ const Signup = () => {
     const p = form.password
     if (!p) return null
     if (p.length < 8) return { label: 'Too short', color: 'bg-red-500', width: 'w-1/4' }
-    if (p.length < 10) return { label: 'Weak', color: 'bg-yellow-500', width: 'w-2/4' }
-    if (!/[A-Z]/.test(p) || !/[0-9]/.test(p)) return { label: 'Fair', color: 'bg-blue-500', width: 'w-3/4' }
+
+    // Composite score so complexity always outweighs length alone — a short
+    // 9-char password with upper/lower/digit/symbol should never rate worse
+    // than a long password of a single character class.
+    let score = 0
+    if (p.length >= 10) score += 1
+    if (p.length >= 14) score += 1
+    if (/[A-Z]/.test(p)) score += 1
+    if (/[0-9]/.test(p)) score += 1
+    if (/[^A-Za-z0-9]/.test(p)) score += 1
+
+    if (score <= 1) return { label: 'Weak', color: 'bg-yellow-500', width: 'w-2/4' }
+    if (score <= 3) return { label: 'Fair', color: 'bg-blue-500', width: 'w-3/4' }
     return { label: 'Strong', color: 'bg-green-500', width: 'w-full' }
   }
 
@@ -255,7 +266,7 @@ const Signup = () => {
                   <div className="w-full h-1 bg-[#2a2a3d] rounded-full overflow-hidden">
                     <div className={`h-full ${strength.color} ${strength.width} transition-all duration-300 rounded-full`} />
                   </div>
-                  <p className="text-[10px] text-[#94a3b8] mt-1">{strength.label}</p>
+                  <p className="text-[11px] text-[#94a3b8] mt-1">{strength.label}</p>
                 </div>
               )}
             </div>

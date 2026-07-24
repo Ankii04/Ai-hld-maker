@@ -1,270 +1,414 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
 import {
   Network,
   Database,
   Code2,
-  Layout,
   TrendingUp,
   Zap,
   BrainCircuit,
   ArrowRight,
-  Play,
-  CheckCircle,
+  Check,
   Sparkles,
-  ChevronRight,
   Github,
-  Twitter,
   Linkedin,
   Server,
-  Cpu,
-  BookOpen,
-  Terminal,
-  Copy,
-  Check,
   Menu,
   X,
+  Play,
+  Layers,
+  ShieldCheck,
 } from 'lucide-react'
 
-/* ─────────────────────────── helpers ─────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   Shared bits
+   ═══════════════════════════════════════════════════════════════ */
 
 const GradientText = ({ children, className = '' }) => (
   <span
-    className={`bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent ${className}`}
+    className={`bg-gradient-to-r from-[#7cb0ff] via-[#a78bfa] to-[#67e8f9] bg-clip-text text-transparent ${className}`}
   >
     {children}
   </span>
 )
 
-/* ─────────────────────────── Navbar ─────────────────────────── */
+/**
+ * Reveals children on scroll (respects prefers-reduced-motion via CSS).
+ *
+ * Deliberately fails OPEN: content starts at opacity 0, so if the reveal
+ * never fired the page would be permanently blank. IntersectionObserver
+ * does not fire while a document is hidden (background tab, prerender,
+ * non-compositing embed), so a safety timer force-reveals everything
+ * regardless. Marketing copy must never be invisible.
+ */
+const Reveal = ({ children, delay = 0, className = '' }) => {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const show = () => {
+      el.style.transitionDelay = `${delay}ms`
+      el.classList.add('reveal-visible')
+    }
+
+    if (typeof IntersectionObserver === 'undefined') {
+      show()
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          show()
+          observer.unobserve(el)
+        }
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -60px 0px' },
+    )
+    observer.observe(el)
+
+    // Fail-open safety net
+    const fallback = setTimeout(() => {
+      show()
+      observer.disconnect()
+    }, 1500)
+
+    return () => {
+      clearTimeout(fallback)
+      observer.disconnect()
+    }
+  }, [delay])
+
+  return (
+    <div ref={ref} className={`reveal ${className}`}>
+      {children}
+    </div>
+  )
+}
+
+/**
+ * Pure-CSS 3D architecture stack — four tier plates orbiting on an
+ * isometric axis, linked by a beam with a packet falling through them.
+ * Hand-built transforms: no WebGL, no model files, no dependencies.
+ */
+const TIERS = [
+  {
+    z: 150,
+    ring: 'rgba(59,130,246,0.45)',
+    fill: 'rgba(59,130,246,0.07)',
+    nodes: [
+      { x: 22, y: 30, w: 34, h: 16, c: 'rgba(59,130,246,0.55)', f: 'rgba(59,130,246,0.18)' },
+      { x: 60, y: 52, w: 26, h: 16, c: 'rgba(59,130,246,0.55)', f: 'rgba(59,130,246,0.18)' },
+    ],
+  },
+  {
+    z: 100,
+    ring: 'rgba(139,92,246,0.45)',
+    fill: 'rgba(139,92,246,0.07)',
+    nodes: [
+      { x: 34, y: 40, w: 40, h: 16, c: 'rgba(139,92,246,0.55)', f: 'rgba(139,92,246,0.18)' },
+    ],
+  },
+  {
+    z: 50,
+    ring: 'rgba(6,182,212,0.45)',
+    fill: 'rgba(6,182,212,0.07)',
+    nodes: [
+      { x: 16, y: 34, w: 24, h: 15, c: 'rgba(6,182,212,0.55)', f: 'rgba(6,182,212,0.18)' },
+      { x: 44, y: 26, w: 24, h: 15, c: 'rgba(6,182,212,0.55)', f: 'rgba(6,182,212,0.18)' },
+      { x: 34, y: 60, w: 30, h: 15, c: 'rgba(6,182,212,0.55)', f: 'rgba(6,182,212,0.18)' },
+    ],
+  },
+  {
+    z: 0,
+    ring: 'rgba(16,185,129,0.45)',
+    fill: 'rgba(16,185,129,0.07)',
+    nodes: [
+      { x: 20, y: 44, w: 28, h: 16, c: 'rgba(16,185,129,0.55)', f: 'rgba(16,185,129,0.18)' },
+      { x: 56, y: 36, w: 22, h: 16, c: 'rgba(245,158,11,0.55)', f: 'rgba(245,158,11,0.16)' },
+    ],
+  },
+]
+
+const ArchStack3D = ({ size = 320, className = '', style }) => (
+  <div
+    className={`stack3d-scene ${className}`}
+    style={{ width: size, height: size, ...style }}
+    aria-hidden="true"
+  >
+    <div className="stack3d">
+      {TIERS.map((tier) => (
+        <div
+          key={tier.z}
+          className="stack-plate"
+          style={{
+            transform: `translateZ(${tier.z}px)`,
+            borderColor: tier.ring,
+            background: tier.fill,
+          }}
+        >
+          {tier.nodes.map((n, i) => (
+            <span
+              key={i}
+              className="stack-node"
+              style={{
+                left: `${n.x}%`,
+                top: `${n.y}%`,
+                width: `${n.w}%`,
+                height: `${n.h}%`,
+                borderColor: n.c,
+                background: n.f,
+              }}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+)
+
+/* ═══════════════════════════════════════════════════════════════
+   Navbar
+   ═══════════════════════════════════════════════════════════════ */
+
+const NAV_LINKS = [
+  { label: 'Features', href: '#features' },
+  { label: 'How it works', href: '#how' },
+  { label: 'Pricing', href: '#pricing' },
+]
 
 const Navbar = () => {
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#2a2a3d] bg-[#0a0a0f]/80 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <BrainCircuit className="w-5 h-5 text-white" />
+    <nav
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? 'border-b border-[#22222f] bg-[#0a0a0f]/85 backdrop-blur-xl'
+          : 'border-b border-transparent bg-transparent'
+      }`}
+    >
+      <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2.5 group"
+          aria-label="ArchMind home"
+        >
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] flex items-center justify-center">
+            <BrainCircuit className="w-[18px] h-[18px] text-white" />
           </div>
-          <span className="font-heading text-xl font-bold">
-            <GradientText>ArchMind</GradientText>
+          <span className="font-heading text-[15px] font-semibold tracking-tight text-[#f1f5f9]">
+            ArchMind
           </span>
-        </div>
+        </button>
 
-        {/* Nav links */}
-        <div className="hidden md:flex items-center gap-8">
-          {['Features', 'Pricing', 'Docs'].map((link) => (
+        <div className="hidden md:flex items-center gap-1">
+          {NAV_LINKS.map((l) => (
             <a
-              key={link}
-              href={`#${link.toLowerCase()}`}
-              className="text-[#94a3b8] hover:text-[#f1f5f9] text-sm font-medium transition-colors duration-200"
+              key={l.label}
+              href={l.href}
+              className="px-3 py-2 rounded-lg text-[13px] font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#16161f] transition-colors"
             >
-              {link}
+              {l.label}
             </a>
           ))}
         </div>
 
-        {/* CTA buttons (desktop) */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2">
           {isAuthenticated ? (
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="px-5 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-400 hover:to-purple-500 transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
-            >
-              Go to Dashboard
+            <button onClick={() => navigate('/dashboard')} className="btn btn-primary">
+              Dashboard
             </button>
           ) : (
             <>
-              <button
-                onClick={() => navigate('/login')}
-                className="px-4 py-2 text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] transition-colors duration-200"
-              >
-                Sign In
+              <button onClick={() => navigate('/login')} className="btn btn-ghost">
+                Sign in
               </button>
-              <button
-                onClick={() => navigate('/signup')}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-400 hover:to-purple-500 transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
-              >
-                Get Started
+              <button onClick={() => navigate('/signup')} className="btn btn-primary">
+                Start free
               </button>
             </>
           )}
         </div>
 
-        {/* Hamburger Menu (mobile toggle) */}
-        <div className="flex md:hidden items-center gap-3">
-          {!isAuthenticated && (
-            <button
-              onClick={() => navigate('/signup')}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-400 hover:to-purple-500 transition-all duration-200"
-            >
-              Get Started
-            </button>
-          )}
-          {isAuthenticated && (
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-400 hover:to-purple-500 transition-all duration-200"
-            >
-              Dashboard
-            </button>
-          )}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="w-9 h-9 rounded-lg border border-[#2a2a3d] flex items-center justify-center text-[#94a3b8] hover:text-[#f1f5f9]"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          className="md:hidden w-9 h-9 rounded-lg border border-[#22222f] flex items-center justify-center text-[#94a3b8]"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+        >
+          {menuOpen ? <X className="w-[18px] h-[18px]" /> : <Menu className="w-[18px] h-[18px]" />}
+        </button>
       </div>
 
-      {/* Mobile Menu Panel */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-[#2a2a3d] bg-[#0a0a0f]/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-4 animate-fade-in">
-          {['Features', 'Pricing', 'Docs'].map((link) => (
+      {menuOpen && (
+        <div className="md:hidden border-t border-[#22222f] bg-[#0a0a0f]/97 backdrop-blur-xl px-6 py-4 flex flex-col gap-1">
+          {NAV_LINKS.map((l) => (
             <a
-              key={link}
-              href={`#${link.toLowerCase()}`}
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-[#94a3b8] hover:text-[#f1f5f9] text-base font-medium py-2 border-b border-[#2a2a3d]/30"
+              key={l.label}
+              href={l.href}
+              onClick={() => setMenuOpen(false)}
+              className="py-2.5 text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9]"
             >
-              {link}
+              {l.label}
             </a>
           ))}
-          {!isAuthenticated && (
-            <div className="flex items-center gap-4 pt-2">
+          <div className="flex gap-2 pt-3">
+            {isAuthenticated ? (
               <button
-                onClick={() => { setMobileMenuOpen(false); navigate('/login') }}
-                className="flex-1 py-2.5 text-center text-sm font-medium border border-[#2a2a3d] rounded-lg text-[#94a3b8] hover:text-[#f1f5f9]"
+                onClick={() => { setMenuOpen(false); navigate('/dashboard') }}
+                className="btn btn-primary flex-1"
               >
-                Sign In
+                Dashboard
               </button>
-              <button
-                onClick={() => { setMobileMenuOpen(false); navigate('/signup') }}
-                className="flex-1 py-2.5 text-center text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white"
-              >
-                Get Started
-              </button>
-            </div>
-          )}
+            ) : (
+              <>
+                <button
+                  onClick={() => { setMenuOpen(false); navigate('/login') }}
+                  className="btn btn-secondary flex-1"
+                >
+                  Sign in
+                </button>
+                <button
+                  onClick={() => { setMenuOpen(false); navigate('/signup') }}
+                  className="btn btn-primary flex-1"
+                >
+                  Start free
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
     </nav>
   )
 }
 
-/* ─────────────────────────── Hero ─────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   Hero — 3D tilt card with layered parallax depth
+   ═══════════════════════════════════════════════════════════════ */
 
-const AnimatedGrid = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {/* Grid lines */}
+const NODE_ROWS = [
+  {
+    depth: 60,
+    items: [
+      { label: 'Web Client', tone: 'blue' },
+      { label: 'Mobile', tone: 'blue' },
+    ],
+  },
+  {
+    depth: 44,
+    items: [
+      { label: 'API Gateway', tone: 'purple' },
+      { label: 'Auth', tone: 'purple' },
+    ],
+  },
+  {
+    depth: 30,
+    items: [
+      { label: 'Orders', tone: 'cyan' },
+      { label: 'Users', tone: 'cyan' },
+      { label: 'Notify', tone: 'cyan' },
+    ],
+  },
+  {
+    depth: 16,
+    items: [
+      { label: 'Postgres', tone: 'green' },
+      { label: 'Redis', tone: 'amber' },
+      { label: 'Kafka', tone: 'purple' },
+    ],
+  },
+]
+
+const TONES = {
+  blue:   { bg: 'rgba(59,130,246,0.12)',  bd: 'rgba(59,130,246,0.45)',  fg: '#93c5fd' },
+  purple: { bg: 'rgba(139,92,246,0.12)',  bd: 'rgba(139,92,246,0.45)',  fg: '#c4b5fd' },
+  cyan:   { bg: 'rgba(6,182,212,0.12)',   bd: 'rgba(6,182,212,0.45)',   fg: '#67e8f9' },
+  green:  { bg: 'rgba(16,185,129,0.12)',  bd: 'rgba(16,185,129,0.45)',  fg: '#6ee7b7' },
+  amber:  { bg: 'rgba(245,158,11,0.12)',  bd: 'rgba(245,158,11,0.45)',  fg: '#fcd34d' },
+}
+
+const BlueprintCard = () => (
+  <div
+    className="tilt-layer relative rounded-2xl border border-[#26263a] bg-[#0e0e17]/95 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] backdrop-blur-xl overflow-hidden"
+    style={{ transform: 'translateZ(0px)' }}
+  >
+    {/* window chrome */}
     <div
-      className="absolute inset-0 opacity-[0.04]"
-      style={{
-        backgroundImage: `
-          linear-gradient(to right, #3b82f6 1px, transparent 1px),
-          linear-gradient(to bottom, #3b82f6 1px, transparent 1px)
-        `,
-        backgroundSize: '60px 60px',
-      }}
-    />
-    {/* Radial glow */}
-    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-blue-600/8 blur-[120px]" />
-    <div className="absolute top-2/3 left-1/4 w-[400px] h-[400px] rounded-full bg-purple-600/8 blur-[100px]" />
-    <div className="absolute top-1/4 right-1/4 w-[300px] h-[300px] rounded-full bg-cyan-600/6 blur-[80px]" />
-    {/* Floating dots */}
-    {[...Array(12)].map((_, i) => (
-      <div
-        key={i}
-        className="absolute w-1 h-1 rounded-full bg-blue-400/30 animate-pulse"
-        style={{
-          left: `${10 + i * 8}%`,
-          top: `${20 + (i % 4) * 15}%`,
-          animationDelay: `${i * 0.4}s`,
-          animationDuration: `${2 + (i % 3)}s`,
-        }}
-      />
-    ))}
-  </div>
-)
+      className="flex items-center gap-2 px-4 h-10 border-b border-[#20202e] bg-[#0b0b13]"
+      style={{ transform: 'translateZ(20px)' }}
+    >
+      <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+      <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+      <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+      <span className="ml-2 text-[11px] font-mono text-[#6b7280]">architecture.blueprint</span>
+      <span className="ml-auto flex items-center gap-1.5 text-[11px] text-[#67e8f9]">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#22d3ee]" />
+        live
+      </span>
+    </div>
 
-const FloatingPreviewCard = () => (
-  <div className="relative mx-auto max-w-lg">
-    {/* Outer glow */}
-    <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/30 to-purple-500/30 rounded-2xl blur-xl" />
-    <div className="relative bg-[#12121a] border border-[#2a2a3d] rounded-2xl p-5 shadow-2xl">
-      {/* Card header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-500/80" />
-          <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-          <div className="w-3 h-3 rounded-full bg-green-500/80" />
-        </div>
-        <span className="text-[10px] text-[#94a3b8] font-mono">architecture.json</span>
-      </div>
-      {/* Mini architecture diagram */}
-      <div className="space-y-3">
-        {/* Client layer */}
-        <div className="flex items-center gap-2">
-          <div className="w-16 h-7 rounded bg-blue-500/20 border border-blue-500/40 flex items-center justify-center">
-            <span className="text-[9px] text-blue-400 font-mono font-semibold">Client</span>
+    {/* diagram body */}
+    <div className="p-5 space-y-3.5" style={{ transformStyle: 'preserve-3d' }}>
+      {NODE_ROWS.map((row, ri) => (
+        <div key={ri} style={{ transform: `translateZ(${row.depth}px)` }}>
+          <div className="flex items-center justify-center gap-2.5">
+            {row.items.map(({ label, tone }) => {
+              const t = TONES[tone]
+              return (
+                <div
+                  key={label}
+                  className="flex-1 h-9 rounded-lg flex items-center justify-center"
+                  style={{ background: t.bg, border: `1px solid ${t.bd}` }}
+                >
+                  <span
+                    className="text-[10px] font-semibold font-mono tracking-tight"
+                    style={{ color: t.fg }}
+                  >
+                    {label}
+                  </span>
+                </div>
+              )
+            })}
           </div>
-          <div className="flex-1 h-px bg-gradient-to-r from-blue-500/50 to-transparent" />
-          <div className="w-16 h-7 rounded bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center">
-            <span className="text-[9px] text-cyan-400 font-mono font-semibold">CDN</span>
-          </div>
-        </div>
-        {/* Arrow */}
-        <div className="ml-7 w-px h-4 bg-gradient-to-b from-blue-500/50 to-purple-500/50" />
-        {/* API layer */}
-        <div className="flex items-center gap-2">
-          <div className="w-24 h-7 rounded bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
-            <span className="text-[9px] text-purple-400 font-mono font-semibold">API Gateway</span>
-          </div>
-          <div className="flex-1 h-px bg-gradient-to-r from-purple-500/50 to-transparent" />
-          <div className="w-20 h-7 rounded bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
-            <span className="text-[9px] text-purple-400 font-mono font-semibold">Auth Service</span>
-          </div>
-        </div>
-        {/* Arrow */}
-        <div className="ml-11 w-px h-4 bg-gradient-to-b from-purple-500/50 to-cyan-500/50" />
-        {/* Services layer */}
-        <div className="grid grid-cols-3 gap-2">
-          {['User SVC', 'Order SVC', 'Notify SVC'].map((svc) => (
-            <div
-              key={svc}
-              className="h-7 rounded bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center"
-            >
-              <span className="text-[8px] text-cyan-400 font-mono font-semibold">{svc}</span>
+
+          {ri < NODE_ROWS.length - 1 && (
+            <div className="relative h-4 flex items-center justify-center">
+              <div className="w-px h-full bg-gradient-to-b from-[#3b82f6]/50 to-[#8b5cf6]/30" />
+              <span
+                className="packet-dot-y absolute top-0 w-1.5 h-1.5 rounded-full bg-[#60a5fa] shadow-[0_0_8px_#60a5fa]"
+                style={{ animationDelay: `${ri * 0.5}s` }}
+              />
             </div>
-          ))}
+          )}
         </div>
-        {/* Arrow */}
-        <div className="mx-auto w-px h-4 bg-gradient-to-b from-cyan-500/50 to-green-500/50" />
-        {/* DB layer */}
-        <div className="flex gap-2 justify-center">
-          {['PostgreSQL', 'Redis', 'S3'].map((db) => (
-            <div
-              key={db}
-              className="h-7 px-2 rounded bg-green-500/20 border border-green-500/40 flex items-center justify-center"
-            >
-              <span className="text-[8px] text-green-400 font-mono font-semibold">{db}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      {/* Bottom tag */}
-      <div className="mt-4 flex items-center gap-2 pt-3 border-t border-[#2a2a3d]">
-        <Sparkles className="w-3 h-3 text-purple-400" />
-        <span className="text-[10px] text-[#94a3b8] font-mono">Generated in 3.2s • HLD Complete</span>
-        <div className="ml-auto w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-      </div>
+      ))}
+    </div>
+
+    {/* footer stat strip */}
+    <div
+      className="flex items-center gap-4 px-5 h-11 border-t border-[#20202e] bg-[#0b0b13]"
+      style={{ transform: 'translateZ(28px)' }}
+    >
+      <Sparkles className="w-3.5 h-3.5 text-[#a78bfa]" />
+      <span className="text-[11px] text-[#94a3b8]">Generated in 3.2s</span>
+      <span className="text-[11px] text-[#4b5563]">·</span>
+      <span className="text-[11px] text-[#94a3b8]">14 components</span>
+      <span className="ml-auto text-[11px] font-mono text-[#6ee7b7]">HLD ready</span>
     </div>
   </div>
 )
@@ -272,245 +416,456 @@ const FloatingPreviewCard = () => (
 const Hero = () => {
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const sceneRef = useRef(null)
+  const bodyRef = useRef(null)
+
+  const handleMove = useCallback((e) => {
+    const scene = sceneRef.current
+    const body = bodyRef.current
+    if (!scene || !body) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const r = scene.getBoundingClientRect()
+    const px = (e.clientX - r.left) / r.width - 0.5
+    const py = (e.clientY - r.top) / r.height - 0.5
+    body.style.transform = `rotateY(${px * 16}deg) rotateX(${-py * 14}deg)`
+  }, [])
+
+  const handleLeave = useCallback(() => {
+    const body = bodyRef.current
+    if (body) body.style.transform = 'rotateY(-9deg) rotateX(6deg)'
+  }, [])
+
+  useEffect(() => { handleLeave() }, [handleLeave])
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center pt-20 pb-16 px-6 overflow-hidden">
-      <AnimatedGrid />
-      <div className="relative z-10 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-16 items-center">
-        {/* Left: text */}
+    <section className="relative min-h-screen flex items-center overflow-hidden pt-28 pb-20">
+      {/* ── 3D / atmospheric background ── */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="aurora-blob aurora-1" style={{ top: '-14%', left: '-6%' }} />
+        <div className="aurora-blob aurora-2" style={{ top: '18%', right: '-8%' }} />
+        <div className="aurora-blob aurora-3" style={{ bottom: '-6%', left: '32%' }} />
+        <div className="grid-floor" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(10,10,15,0) 0%, rgba(10,10,15,0.75) 100%)',
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-6xl w-full px-6 grid lg:grid-cols-[1.05fr_1fr] gap-14 lg:gap-10 items-center">
+        {/* ── Copy ── */}
         <div className="text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold font-mono mb-6">
-            <Sparkles className="w-3 h-3" />
-            AI-Powered System Design
-          </div>
-          <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight text-[#f1f5f9] mb-6">
-            Turn Ideas Into{' '}
-            <GradientText>Complete System Architectures</GradientText>
-          </h1>
-          <p className="text-[#94a3b8] text-lg lg:text-xl leading-relaxed mb-10 max-w-xl">
-            Describe your product in plain English. ArchMind instantly generates
-            HLD, LLD, Database schemas, API contracts, and Scalability guides —
-            production-ready, in seconds.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-            {isAuthenticated ? (
+          <Reveal>
+            <a
+              href="#features"
+              className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 mb-7 rounded-full border border-[#26263a] bg-[#12121a]/80 backdrop-blur text-[12px] text-[#cbd5e1] hover:border-[#3a3a55] transition-colors"
+            >
+              <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white text-[10px] font-semibold tracking-wide">
+                NEW
+              </span>
+              Live traffic simulation & chaos testing
+              <ArrowRight className="w-3 h-3 text-[#94a3b8]" />
+            </a>
+          </Reveal>
+
+          <Reveal delay={60}>
+            <h1
+              className="font-heading font-bold text-[#f8fafc] mb-6"
+              style={{
+                fontSize: 'clamp(2.6rem, 5.6vw, 4.25rem)',
+                lineHeight: 1.04,
+                letterSpacing: '-0.035em',
+              }}
+            >
+              Ship system design
+              <br />
+              <GradientText>at the speed of thought.</GradientText>
+            </h1>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <p className="text-[17px] leading-relaxed text-[#94a3b8] mb-9 max-w-[30rem] mx-auto lg:mx-0">
+              Describe your product in plain English. ArchMind generates the architecture,
+              database schema, API contracts and scaling plan — then lets you stress-test it
+              under real traffic.
+            </p>
+          </Reveal>
+
+          <Reveal delay={180}>
+            <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
               <button
-                onClick={() => navigate('/dashboard')}
-                className="group flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-400 hover:to-purple-500 transition-all duration-300 shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02]"
+                onClick={() => navigate(isAuthenticated ? '/dashboard' : '/signup')}
+                className="btn btn-primary btn-lg group w-full sm:w-auto"
               >
-                Go to Dashboard
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                {isAuthenticated ? 'Go to dashboard' : 'Start building free'}
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => navigate('/signup')}
-                  className="group flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-400 hover:to-purple-500 transition-all duration-300 shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02]"
-                >
-                  Start Building Free
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
-                <button
-                  onClick={() => navigate('/signup')}
-                  className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl border border-[#2a2a3d] text-[#f1f5f9] font-semibold hover:bg-[#12121a] hover:border-[#3b82f6]/40 transition-all duration-200 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)]"
-                >
-                  <Play className="w-4 h-4 text-blue-400" />
-                  See Demo
-                </button>
-              </>
-            )}
-          </div>
-          <div className="mt-8 flex items-center gap-6 justify-center lg:justify-start">
-            {['3 designs free', 'No credit card', 'Instant results'].map((item) => (
-              <div key={item} className="flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5 text-green-400" />
-                <span className="text-xs text-[#94a3b8]">{item}</span>
-              </div>
-            ))}
-          </div>
+              <a href="#how" className="btn btn-secondary btn-lg w-full sm:w-auto">
+                <Play className="w-3.5 h-3.5 text-[#7cb0ff]" />
+                See how it works
+              </a>
+            </div>
+          </Reveal>
+
+          <Reveal delay={240}>
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 justify-center lg:justify-start">
+              {['3 designs free', 'No credit card', 'Export anywhere'].map((t) => (
+                <span key={t} className="inline-flex items-center gap-1.5 text-[13px] text-[#94a3b8]">
+                  <Check className="w-3.5 h-3.5 text-[#34d399]" />
+                  {t}
+                </span>
+              ))}
+            </div>
+          </Reveal>
         </div>
-        {/* Right: floating card */}
-        <div className="hidden lg:block">
-          <FloatingPreviewCard />
-        </div>
+
+        {/* ── 3D tilt card ── */}
+        <Reveal delay={150} className="hidden lg:block">
+          <div
+            ref={sceneRef}
+            className="tilt-scene relative"
+            onMouseMove={handleMove}
+            onMouseLeave={handleLeave}
+          >
+            <div
+              className="absolute -inset-8 rounded-[2rem] opacity-60 blur-3xl pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(circle at 50% 40%, rgba(59,130,246,0.25), rgba(139,92,246,0.16) 45%, transparent 70%)',
+              }}
+              aria-hidden="true"
+            />
+            <div ref={bodyRef} className="tilt-body relative">
+              <BlueprintCard />
+            </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   )
 }
 
-/* ─────────────────────────── Features ─────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   Bento feature grid
+   ═══════════════════════════════════════════════════════════════ */
 
-const features = [
-  {
-    icon: Network,
-    title: 'Architecture Diagrams',
-    desc: 'Generate interactive HLD and LLD diagrams with component relationships, data flows, and deployment topology.',
-    color: 'blue',
-    tag: 'HLD + LLD',
-  },
-  {
-    icon: Database,
-    title: 'Database Design',
-    desc: 'Auto-generate normalized ER diagrams, table schemas with indexes, relationships, and migration scripts.',
-    color: 'cyan',
-    tag: 'Schema + ER',
-  },
-  {
-    icon: Code2,
-    title: 'API Contracts',
-    desc: 'Full OpenAPI 3.0 specs with endpoints, request/response models, auth schemes, and error codes.',
-    color: 'purple',
-    tag: 'OpenAPI 3.0',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Scalability Guide',
-    desc: 'Load balancing strategies, caching layers, CDN configuration, and horizontal scaling recommendations.',
-    color: 'green',
-    tag: 'Scale Strategy',
-  },
-  {
-    icon: Zap,
-    title: 'Challenge Mode',
-    desc: 'Find bottlenecks in your design. AI stress-tests your architecture and suggests optimizations.',
-    color: 'yellow',
-    tag: 'Pro Feature',
-  },
-]
+const MiniDiagram = () => (
+  <div className="mt-5 rounded-xl border border-[#22222f] bg-[#0b0b12] p-4">
+    <div className="flex items-center justify-center gap-2 mb-2.5">
+      {['Client', 'CDN'].map((l) => (
+        <div
+          key={l}
+          className="flex-1 h-7 rounded-md flex items-center justify-center border border-[#3b82f6]/40 bg-[#3b82f6]/10"
+        >
+          <span className="text-[9px] font-mono font-semibold text-[#93c5fd]">{l}</span>
+        </div>
+      ))}
+    </div>
+    <div className="relative h-3 flex justify-center">
+      <div className="w-px h-full bg-[#3b82f6]/40" />
+      <span className="packet-dot-y absolute top-0 w-1 h-1 rounded-full bg-[#60a5fa]" />
+    </div>
+    <div className="flex items-center justify-center gap-2 mt-2.5">
+      {['Gateway', 'Service', 'DB'].map((l, i) => (
+        <div
+          key={l}
+          className="flex-1 h-7 rounded-md flex items-center justify-center"
+          style={{
+            border: `1px solid ${i === 2 ? 'rgba(16,185,129,0.4)' : 'rgba(139,92,246,0.4)'}`,
+            background: i === 2 ? 'rgba(16,185,129,0.1)' : 'rgba(139,92,246,0.1)',
+          }}
+        >
+          <span
+            className="text-[9px] font-mono font-semibold"
+            style={{ color: i === 2 ? '#6ee7b7' : '#c4b5fd' }}
+          >
+            {l}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+)
 
-const colorMap = {
-  blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400', badge: 'bg-blue-500/10 text-blue-400' },
-  cyan: { bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', icon: 'text-cyan-400', badge: 'bg-cyan-500/10 text-cyan-400' },
-  purple: { bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: 'text-purple-400', badge: 'bg-purple-500/10 text-purple-400' },
-  pink: { bg: 'bg-pink-500/10', border: 'border-pink-500/20', icon: 'text-pink-400', badge: 'bg-pink-500/10 text-pink-400' },
-  green: { bg: 'bg-green-500/10', border: 'border-green-500/20', icon: 'text-green-400', badge: 'bg-green-500/10 text-green-400' },
-  yellow: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', icon: 'text-yellow-400', badge: 'bg-yellow-500/10 text-yellow-400' },
-}
+const SchemaPreview = () => (
+  <div className="mt-5 rounded-xl border border-[#22222f] bg-[#0b0b12] overflow-hidden font-mono text-[11px]">
+    <div className="px-3 py-2 border-b border-[#22222f] bg-[#10101a] text-[#6ee7b7] font-semibold">
+      users
+    </div>
+    {[
+      ['id', 'uuid', 'PK'],
+      ['email', 'varchar', 'UQ'],
+      ['created_at', 'timestamptz', ''],
+    ].map(([c, t, k]) => (
+      <div key={c} className="flex items-center gap-2 px-3 py-1.5 border-b border-[#1a1a26] last:border-0">
+        <span className="text-[#e2e8f0] flex-1">{c}</span>
+        <span className="text-[#64748b]">{t}</span>
+        {k && (
+          <span className="px-1 rounded bg-[#f59e0b]/15 text-[#fcd34d] text-[9px] font-bold">{k}</span>
+        )}
+      </div>
+    ))}
+  </div>
+)
+
+const EndpointPreview = () => (
+  <div className="mt-5 space-y-1.5 font-mono text-[11px]">
+    {[
+      ['GET', '/api/v1/orders', '#34d399'],
+      ['POST', '/api/v1/orders', '#60a5fa'],
+      ['DELETE', '/api/v1/orders/:id', '#f87171'],
+    ].map(([m, p, c]) => (
+      <div
+        key={`${m} ${p}`}
+        className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-[#22222f] bg-[#0b0b12]"
+      >
+        <span className="font-bold w-12 shrink-0" style={{ color: c }}>{m}</span>
+        <span className="text-[#cbd5e1] truncate">{p}</span>
+      </div>
+    ))}
+  </div>
+)
 
 const Features = () => (
-  <section id="features" className="py-24 px-6 bg-[#0a0a0f]">
-    <div className="max-w-7xl mx-auto">
-      <div className="text-center mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold font-mono mb-4">
-          <Sparkles className="w-3 h-3" />
-          Everything You Need
+  <section id="features" className="relative py-28 px-6">
+    <div className="mx-auto max-w-6xl">
+      <Reveal>
+        <div className="max-w-2xl mb-14">
+          <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#7cb0ff]">
+            Everything you need
+          </span>
+          <h2
+            className="mt-3 font-heading font-bold text-[#f8fafc]"
+            style={{ fontSize: 'clamp(2rem, 3.6vw, 2.85rem)', letterSpacing: '-0.03em', lineHeight: 1.12 }}
+          >
+            One prompt. <GradientText>An entire blueprint.</GradientText>
+          </h2>
+          <p className="mt-4 text-[16px] leading-relaxed text-[#94a3b8]">
+            Not a chatbot that writes paragraphs about architecture — a system that produces
+            the actual artifacts you'd hand to an engineering team.
+          </p>
         </div>
-        <h2 className="font-heading text-4xl lg:text-5xl font-bold text-[#f1f5f9] mb-4">
-          One prompt. <GradientText>Five deliverables.</GradientText>
-        </h2>
-        <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
-          ArchMind generates a complete technical blueprint across all dimensions of your product — no more context switching between tools.
-        </p>
-      </div>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {features.map(({ icon: Icon, title, desc, color, tag }) => {
-          const c = colorMap[color]
-          return (
-            <div
-              key={title}
-              className="group bg-[#12121a] border border-[#2a2a3d] rounded-xl p-6 hover:border-[#3b82f6]/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.08)] transition-all duration-300 cursor-default"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-11 h-11 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className={`w-5 h-5 ${c.icon}`} />
-                </div>
-                <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full ${c.badge}`}>
-                  {tag}
-                </span>
+      </Reveal>
+
+      <div className="grid md:grid-cols-6 gap-4">
+        <Reveal className="md:col-span-4">
+          <article className="bento-card p-7 h-full">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-lg bg-[#3b82f6]/12 border border-[#3b82f6]/25 flex items-center justify-center">
+                <Network className="w-[18px] h-[18px] text-[#7cb0ff]" />
               </div>
-              <h3 className="font-heading text-lg font-bold text-[#f1f5f9] mb-2">{title}</h3>
-              <p className="text-[#94a3b8] text-sm leading-relaxed">{desc}</p>
+              <h3 className="font-heading text-[17px] font-semibold text-[#f1f5f9]">
+                Architecture diagrams
+              </h3>
             </div>
-          )
-        })}
+            <p className="mt-3 text-[14px] leading-relaxed text-[#94a3b8] max-w-md">
+              Interactive HLD and LLD graphs with component relationships, data flows and
+              deployment topology — editable on an infinite canvas.
+            </p>
+            <MiniDiagram />
+          </article>
+        </Reveal>
+
+        <Reveal delay={80} className="md:col-span-2">
+          <article className="bento-card p-7 h-full">
+            <div className="w-9 h-9 rounded-lg bg-[#10b981]/12 border border-[#10b981]/25 flex items-center justify-center">
+              <Database className="w-[18px] h-[18px] text-[#6ee7b7]" />
+            </div>
+            <h3 className="mt-3 font-heading text-[17px] font-semibold text-[#f1f5f9]">
+              Database schema
+            </h3>
+            <p className="mt-2.5 text-[14px] leading-relaxed text-[#94a3b8]">
+              Normalized ER models with indexes and relationships. Export as SQL DDL.
+            </p>
+            <SchemaPreview />
+          </article>
+        </Reveal>
+
+        <Reveal delay={40} className="md:col-span-2">
+          <article className="bento-card p-7 h-full">
+            <div className="w-9 h-9 rounded-lg bg-[#8b5cf6]/12 border border-[#8b5cf6]/25 flex items-center justify-center">
+              <Code2 className="w-[18px] h-[18px] text-[#c4b5fd]" />
+            </div>
+            <h3 className="mt-3 font-heading text-[17px] font-semibold text-[#f1f5f9]">
+              API contracts
+            </h3>
+            <p className="mt-2.5 text-[14px] leading-relaxed text-[#94a3b8]">
+              Typed endpoints with payloads and auth. Copy as OpenAPI 3.0.
+            </p>
+            <EndpointPreview />
+          </article>
+        </Reveal>
+
+        <Reveal delay={80} className="md:col-span-4">
+          <article className="bento-card p-7 h-full relative overflow-hidden">
+            <div
+              className="absolute -right-16 -top-16 w-56 h-56 rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.10), transparent 68%)' }}
+              aria-hidden="true"
+            />
+            <div className="relative">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-[#f59e0b]/12 border border-[#f59e0b]/25 flex items-center justify-center">
+                  <Zap className="w-[18px] h-[18px] text-[#fcd34d]" />
+                </div>
+                <h3 className="font-heading text-[17px] font-semibold text-[#f1f5f9]">
+                  Traffic simulation & chaos testing
+                </h3>
+              </div>
+              <p className="mt-3 text-[14px] leading-relaxed text-[#94a3b8] max-w-lg">
+                Push synthetic load through your design, watch utilization and latency climb
+                per node, then kill a cache or crash the gateway and see exactly what breaks.
+              </p>
+
+              <div className="mt-5 grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Throughput', value: '500', unit: 'RPS', color: '#7cb0ff' },
+                  { label: 'p50 latency', value: '14', unit: 'ms', color: '#6ee7b7' },
+                  { label: 'Error rate', value: '0.97', unit: '%', color: '#fcd34d' },
+                ].map((m) => (
+                  <div key={m.label} className="rounded-xl border border-[#22222f] bg-[#0b0b12] p-3">
+                    <div className="text-[11px] uppercase tracking-wider text-[#94a3b8]">
+                      {m.label}
+                    </div>
+                    <div className="mt-1.5 font-mono text-[19px] font-semibold" style={{ color: m.color }}>
+                      {m.value}
+                      <span className="ml-1 text-[11px] text-[#64748b]">{m.unit}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </article>
+        </Reveal>
+
+        <Reveal className="md:col-span-3">
+          <article className="bento-card p-7 h-full">
+            <div className="w-9 h-9 rounded-lg bg-[#06b6d4]/12 border border-[#06b6d4]/25 flex items-center justify-center">
+              <TrendingUp className="w-[18px] h-[18px] text-[#67e8f9]" />
+            </div>
+            <h3 className="mt-3 font-heading text-[17px] font-semibold text-[#f1f5f9]">
+              Scalability plan
+            </h3>
+            <p className="mt-2.5 text-[14px] leading-relaxed text-[#94a3b8]">
+              Caching layers, load balancing, sharding strategy and CDN posture — with the
+              stress points that break first, called out by scale tier.
+            </p>
+          </article>
+        </Reveal>
+
+        <Reveal delay={80} className="md:col-span-3">
+          <article className="bento-card p-7 h-full">
+            <div className="w-9 h-9 rounded-lg bg-[#ef4444]/12 border border-[#ef4444]/25 flex items-center justify-center">
+              <ShieldCheck className="w-[18px] h-[18px] text-[#fca5a5]" />
+            </div>
+            <h3 className="mt-3 font-heading text-[17px] font-semibold text-[#f1f5f9]">
+              Challenge mode
+            </h3>
+            <p className="mt-2.5 text-[14px] leading-relaxed text-[#94a3b8]">
+              An adversarial pass over your own design: single points of failure, bottlenecks
+              and trade-offs you didn't account for — ranked by severity.
+            </p>
+          </article>
+        </Reveal>
       </div>
     </div>
   </section>
 )
 
-/* ─────────────────────────── How It Works ─────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   How it works
+   ═══════════════════════════════════════════════════════════════ */
 
-const steps = [
+const STEPS = [
   {
-    num: '01',
+    n: '01',
     icon: Code2,
-    title: 'Describe Your Product',
-    desc: 'Write a plain-English description of your product. Include users, features, and scale expectations. No technical jargon required.',
-    color: 'blue',
+    title: 'Describe the product',
+    body: 'Plain English. Add scale expectations, budget and tech preferences if you have them — skip them if you don\'t.',
+    tone: '#7cb0ff',
   },
   {
-    num: '02',
+    n: '02',
     icon: BrainCircuit,
-    title: 'AI Generates Blueprint',
-    desc: 'ArchMind\'s AI analyzes your input and generates a full technical blueprint: HLD, LLD, DB schema, API spec, and scaling strategy.',
-    color: 'purple',
+    title: 'Generate the blueprint',
+    body: 'HLD, LLD, database schema, API contracts and a scaling plan — produced together so they actually agree with each other.',
+    tone: '#c4b5fd',
   },
   {
-    num: '03',
-    icon: Zap,
-    title: 'Edit, Export, Ship',
-    desc: 'Refine any section with follow-up prompts. Export as JSON, download as PDF, or share a live link with your team.',
-    color: 'cyan',
+    n: '03',
+    icon: Layers,
+    title: 'Stress it, then ship it',
+    body: 'Simulate traffic, inject failures, refine on the canvas, then export to PDF, JSON or OpenAPI.',
+    tone: '#67e8f9',
   },
 ]
 
 const HowItWorks = () => (
-  <section className="py-24 px-6 bg-[#0d0d15] border-y border-[#2a2a3d]">
-    <div className="max-w-7xl mx-auto">
-      <div className="text-center mb-16">
-        <h2 className="font-heading text-4xl lg:text-5xl font-bold text-[#f1f5f9] mb-4">
-          How It <GradientText>Works</GradientText>
-        </h2>
-        <p className="text-[#94a3b8] text-lg max-w-xl mx-auto">
-          From idea to production-ready architecture in three simple steps.
-        </p>
-      </div>
-      <div className="grid md:grid-cols-3 gap-8 relative">
-        {/* Connecting lines */}
-        <div className="hidden md:block absolute top-10 left-[calc(16.67%+2.5rem)] right-[calc(50%+2.5rem)] h-px bg-gradient-to-r from-blue-500/30 to-purple-500/30" />
-        <div className="hidden md:block absolute top-10 left-[calc(50%+2.5rem)] right-[calc(16.67%+2.5rem)] h-px bg-gradient-to-r from-purple-500/30 to-cyan-500/30" />
-        {steps.map(({ num, icon: Icon, title, desc, color }) => {
-          const c = colorMap[color]
-          return (
-            <div key={num} className="relative text-center">
-              <div className="relative inline-flex items-center justify-center mb-6">
-                <div className={`w-20 h-20 rounded-2xl ${c.bg} border ${c.border} flex items-center justify-center mx-auto`}>
-                  <Icon className={`w-8 h-8 ${c.icon}`} />
+  <section id="how" className="relative py-28 px-6 border-y border-[#16161f] bg-[#0c0c13]">
+    <div className="mx-auto max-w-6xl">
+      <Reveal>
+        <div className="max-w-2xl mb-14">
+          <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#a78bfa]">
+            How it works
+          </span>
+          <h2
+            className="mt-3 font-heading font-bold text-[#f8fafc]"
+            style={{ fontSize: 'clamp(2rem, 3.6vw, 2.85rem)', letterSpacing: '-0.03em', lineHeight: 1.12 }}
+          >
+            Idea to architecture in <GradientText>three steps.</GradientText>
+          </h2>
+        </div>
+      </Reveal>
+
+      <div className="grid md:grid-cols-3 gap-4 relative">
+        <div
+          className="hidden md:block absolute top-[46px] left-[16%] right-[16%] h-px bg-gradient-to-r from-[#3b82f6]/30 via-[#8b5cf6]/30 to-[#06b6d4]/30"
+          aria-hidden="true"
+        />
+        {STEPS.map(({ n, icon: Icon, title, body, tone }, i) => (
+          <Reveal key={n} delay={i * 90}>
+            <div className="relative bento-card p-7 h-full">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center border"
+                  style={{ background: `${tone}14`, borderColor: `${tone}33` }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: tone }} />
                 </div>
-                <div className={`absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#0a0a0f] border ${c.border} flex items-center justify-center`}>
-                  <span className={`text-[10px] font-mono font-bold ${c.icon}`}>{num}</span>
-                </div>
+                <span className="font-mono text-[12px] font-bold" style={{ color: tone }}>{n}</span>
               </div>
-              <h3 className="font-heading text-xl font-bold text-[#f1f5f9] mb-3">{title}</h3>
-              <p className="text-[#94a3b8] text-sm leading-relaxed">{desc}</p>
+              <h3 className="mt-4 font-heading text-[17px] font-semibold text-[#f1f5f9]">{title}</h3>
+              <p className="mt-2.5 text-[14px] leading-relaxed text-[#94a3b8]">{body}</p>
             </div>
-          )
-        })}
+          </Reveal>
+        ))}
       </div>
     </div>
   </section>
 )
 
-/* ─────────────────────────── Pricing ─────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   Pricing
+   ═══════════════════════════════════════════════════════════════ */
 
-const freeTiers = [
+const FREE_INCLUDED = [
   '3 designs per month',
   'HLD + LLD diagrams',
-  'Database schema',
-  'API contract',
-  'Scalability guide',
+  'Database schema & SQL export',
+  'API contracts',
+  'Scalability plan',
+  'PDF export',
 ]
-const freeNot = ['Challenge Mode', 'PDF Export', 'OpenAPI YAML', 'Share links']
-const proTiers = [
+const FREE_EXCLUDED = ['Challenge mode', 'OpenAPI YAML export', 'Shareable links']
+const PRO_INCLUDED = [
   'Unlimited designs',
-  'HLD + LLD diagrams',
-  'Database schema',
-  'API contract',
-  'Scalability guide',
-  'Challenge Mode',
-  'PDF Export',
-  'OpenAPI YAML',
-  'Share links',
+  'Everything in Free',
+  'Challenge mode',
+  'OpenAPI YAML export',
+  'Shareable read-only links',
+  'Priority generation queue',
 ]
 
 const Pricing = () => {
@@ -518,464 +873,252 @@ const Pricing = () => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   return (
-    <section id="pricing" className="py-24 px-6 bg-[#0a0a0f]">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="font-heading text-4xl lg:text-5xl font-bold text-[#f1f5f9] mb-4">
-            Simple <GradientText>Pricing</GradientText>
-          </h2>
-          <p className="text-[#94a3b8] text-lg">Start free. Upgrade when you need more.</p>
-        </div>
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-          {/* Free */}
-          <div className="bg-[#12121a] border border-[#2a2a3d] rounded-2xl p-8">
-            <div className="mb-6">
-              <h3 className="font-heading text-xl font-bold text-[#f1f5f9] mb-1">Free</h3>
-              <div className="flex items-end gap-1 mb-3">
-                <span className="text-5xl font-bold text-[#f1f5f9]">$0</span>
-                <span className="text-[#94a3b8] mb-2">/month</span>
-              </div>
-              <p className="text-[#94a3b8] text-sm">Perfect for exploring and side projects.</p>
-            </div>
-            <button
-              onClick={() => navigate(isAuthenticated ? '/dashboard' : '/signup')}
-              className="w-full py-3 rounded-xl border border-[#2a2a3d] text-[#f1f5f9] font-semibold hover:bg-[#1a1a28] transition-colors duration-200 mb-6"
+    <section id="pricing" className="relative py-28 px-6">
+      <div className="mx-auto max-w-5xl">
+        <Reveal>
+          <div className="text-center mb-14">
+            <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#67e8f9]">
+              Pricing
+            </span>
+            <h2
+              className="mt-3 font-heading font-bold text-[#f8fafc]"
+              style={{ fontSize: 'clamp(2rem, 3.6vw, 2.85rem)', letterSpacing: '-0.03em' }}
             >
-              {isAuthenticated ? 'Go to Dashboard' : 'Get Started Free'}
-            </button>
-            <div className="space-y-3">
-              {freeTiers.map((item) => (
-                <div key={item} className="flex items-center gap-2.5">
-                  <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                  <span className="text-[#94a3b8] text-sm">{item}</span>
-                </div>
-              ))}
-              {freeNot.map((item) => (
-                <div key={item} className="flex items-center gap-2.5 opacity-40">
-                  <div className="w-4 h-4 rounded-full border border-[#2a2a3d] flex-shrink-0" />
-                  <span className="text-[#94a3b8] text-sm line-through">{item}</span>
-                </div>
-              ))}
-            </div>
+              Start free. <GradientText>Upgrade when it pays for itself.</GradientText>
+            </h2>
           </div>
+        </Reveal>
 
-          {/* Pro */}
-          <div className="relative">
-            <div className="absolute -inset-px bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur-[2px] opacity-60" />
-            <div className="relative bg-[#12121a] border border-blue-500/50 rounded-2xl p-8 shadow-[0_0_40px_rgba(59,130,246,0.15)]">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="px-4 py-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold font-mono shadow-lg">
-                  MOST POPULAR
-                </span>
+        <div className="grid md:grid-cols-2 gap-5 items-stretch">
+          <Reveal className="h-full">
+            <div className="bento-card p-8 h-full flex flex-col">
+              <h3 className="font-heading text-[15px] font-semibold text-[#f1f5f9]">Free</h3>
+              <div className="mt-3 flex items-end gap-1.5">
+                <span className="font-heading text-[44px] font-bold text-[#f8fafc] leading-none tracking-tight">$0</span>
+                <span className="text-[14px] text-[#94a3b8] mb-1">/month</span>
               </div>
-              <div className="mb-6">
-                <h3 className="font-heading text-xl font-bold text-[#f1f5f9] mb-1">Pro</h3>
-                <div className="flex items-end gap-1 mb-3">
-                  <span className="text-5xl font-bold text-[#f1f5f9]">$19</span>
-                  <span className="text-[#94a3b8] mb-2">/month</span>
-                </div>
-                <p className="text-[#94a3b8] text-sm">For engineers and teams who ship fast.</p>
-              </div>
+              <p className="mt-3 text-[14px] text-[#94a3b8]">
+                For exploring, interviews and side projects.
+              </p>
               <button
                 onClick={() => navigate(isAuthenticated ? '/dashboard' : '/signup')}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-400 hover:to-purple-500 transition-all duration-200 shadow-lg shadow-blue-500/30 mb-6 hover:shadow-blue-500/50"
+                className="btn btn-secondary w-full mt-6"
               >
-                {isAuthenticated ? 'Go to Dashboard' : 'Start Pro Trial'}
+                {isAuthenticated ? 'Go to dashboard' : 'Get started free'}
               </button>
-              <div className="space-y-3">
-                {proTiers.map((item) => (
-                  <div key={item} className="flex items-center gap-2.5">
-                    <CheckCircle className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                    <span className="text-[#f1f5f9] text-sm">{item}</span>
+              <div className="mt-7 space-y-2.5">
+                {FREE_INCLUDED.map((f) => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-[#34d399] shrink-0" />
+                    <span className="text-[14px] text-[#cbd5e1]">{f}</span>
+                  </div>
+                ))}
+                {FREE_EXCLUDED.map((f) => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <X className="w-4 h-4 text-[#4b5563] shrink-0" />
+                    <span className="text-[14px] text-[#64748b]">{f}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
+          </Reveal>
+
+          <Reveal delay={80} className="h-full">
+            <div className="relative h-full">
+              <div
+                className="absolute -inset-px rounded-2xl opacity-70 blur-[3px] pointer-events-none"
+                style={{ background: 'linear-gradient(140deg, #3b82f6, #8b5cf6 55%, #06b6d4)' }}
+                aria-hidden="true"
+              />
+              <div className="relative rounded-2xl border border-[#3b82f6]/40 bg-[#12121a] p-8 h-full flex flex-col">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-heading text-[15px] font-semibold text-[#f1f5f9]">Pro</h3>
+                  <span className="px-2.5 py-1 rounded-full bg-[#3b82f6]/15 border border-[#3b82f6]/30 text-[11px] font-semibold text-[#7cb0ff]">
+                    7-day free trial
+                  </span>
+                </div>
+                <div className="mt-3 flex items-end gap-1.5">
+                  <span className="font-heading text-[44px] font-bold text-[#f8fafc] leading-none tracking-tight">$19</span>
+                  <span className="text-[14px] text-[#94a3b8] mb-1">/month</span>
+                </div>
+                <p className="mt-3 text-[14px] text-[#94a3b8]">
+                  For engineers and teams shipping real systems.
+                </p>
+                <button
+                  onClick={() => navigate(isAuthenticated ? '/upgrade' : '/signup')}
+                  className="btn btn-primary w-full mt-6"
+                >
+                  {isAuthenticated ? 'Upgrade to Pro' : 'Start free trial'}
+                </button>
+                <div className="mt-7 space-y-2.5">
+                  {PRO_INCLUDED.map((f) => (
+                    <div key={f} className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-[#7cb0ff] shrink-0" />
+                      <span className="text-[14px] text-[#e2e8f0]">{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </div>
     </section>
   )
 }
 
-/* ─────────────────────────── CTA Banner ─────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   Closing CTA
+   ═══════════════════════════════════════════════════════════════ */
 
-const CTABanner = () => {
+const CTA = () => {
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   return (
-    <section className="py-24 px-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="relative rounded-3xl overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-cyan-600/20" />
-          <div className="absolute inset-0 border border-blue-500/20 rounded-3xl" />
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`,
-              backgroundSize: '30px 30px',
-            }}
-          />
-          <div className="relative text-center py-16 px-8">
-            <h2 className="font-heading text-4xl lg:text-5xl font-bold text-[#f1f5f9] mb-4">
-              Ready to architect something{' '}
-              <GradientText>great?</GradientText>
-            </h2>
-            <p className="text-[#94a3b8] text-lg mb-10 max-w-xl mx-auto">
-              Join thousands of engineers using ArchMind to design scalable systems in minutes.
-            </p>
-            <button
-              onClick={() => navigate(isAuthenticated ? '/dashboard' : '/signup')}
-              className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-lg hover:from-blue-400 hover:to-purple-500 transition-all duration-300 shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02]"
+    <section className="relative py-28 px-6 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="aurora-blob aurora-2" style={{ top: '-34%', left: '26%', opacity: 0.7 }} />
+        <div className="aurora-blob aurora-3" style={{ bottom: '-24%', right: '18%', opacity: 0.6 }} />
+      </div>
+
+      <div className="relative mx-auto max-w-6xl grid lg:grid-cols-[1fr_auto] gap-16 items-center">
+        <Reveal>
+          <div className="text-center lg:text-left">
+            <h2
+              className="font-heading font-bold text-[#f8fafc]"
+              style={{ fontSize: 'clamp(2.1rem, 4vw, 3.1rem)', letterSpacing: '-0.035em', lineHeight: 1.1 }}
             >
-              {isAuthenticated ? 'Go to Dashboard' : 'Start Building Free'}
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+              Your next system starts with <GradientText>one sentence.</GradientText>
+            </h2>
+            <p className="mt-5 text-[17px] text-[#94a3b8] max-w-xl leading-relaxed mx-auto lg:mx-0">
+              Describe it, generate the blueprint, and pressure-test the design before you write
+              a single line of code.
+            </p>
+            <div className="mt-9 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+              <button
+                onClick={() => navigate(isAuthenticated ? '/dashboard' : '/signup')}
+                className="btn btn-primary btn-lg group"
+              >
+                {isAuthenticated ? 'Go to dashboard' : 'Start building free'}
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+              </button>
+              <a href="#features" className="btn btn-secondary btn-lg">
+                Explore features
+              </a>
+            </div>
           </div>
-        </div>
+        </Reveal>
+
+        {/* 3D architecture stack — the closing visual */}
+        <Reveal delay={120} className="hidden lg:block">
+          <div className="relative">
+            <div
+              className="absolute inset-0 blur-3xl opacity-70 pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(circle at 50% 55%, rgba(59,130,246,0.20), rgba(139,92,246,0.12) 50%, transparent 72%)',
+              }}
+              aria-hidden="true"
+            />
+            <ArchStack3D size={340} className="relative" />
+          </div>
+        </Reveal>
       </div>
     </section>
   )
 }
 
-/* ─────────────────────────── Footer ─────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   Footer
+   ═══════════════════════════════════════════════════════════════ */
 
 const Footer = () => (
-  <footer className="border-t border-[#2a2a3d] bg-[#0a0a0f] py-12 px-6">
-    <div className="max-w-7xl mx-auto">
-      <div className="grid md:grid-cols-4 gap-8 mb-12">
-        <div className="md:col-span-2">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+  <footer className="border-t border-[#16161f] bg-[#0a0a0f] py-12 px-6">
+    <div className="mx-auto max-w-6xl">
+      <div className="flex flex-col md:flex-row gap-8 md:items-start justify-between">
+        <div className="max-w-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] flex items-center justify-center">
               <BrainCircuit className="w-4 h-4 text-white" />
             </div>
-            <span className="font-heading text-lg font-bold">
-              <GradientText>ArchMind</GradientText>
-            </span>
+            <span className="font-heading text-[14px] font-semibold text-[#f1f5f9]">ArchMind</span>
           </div>
-          <p className="text-[#94a3b8] text-sm max-w-xs leading-relaxed">
-            AI-powered system design & architecture generator for modern engineering teams.
+          <p className="mt-3 text-[13px] leading-relaxed text-[#94a3b8]">
+            AI-powered system design for engineers who'd rather build than draw boxes.
           </p>
-          <div className="flex gap-3 mt-4">
-            <a href="https://github.com/Ankii04" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="w-8 h-8 rounded-lg border border-[#2a2a3d] flex items-center justify-center hover:border-blue-500/40 hover:bg-blue-500/5 transition-colors cursor-pointer">
-              <Github className="w-4 h-4 text-[#94a3b8]" />
+          <div className="flex gap-2 mt-5">
+            <a
+              href="https://github.com/Ankii04"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+              className="w-8 h-8 rounded-lg border border-[#22222f] flex items-center justify-center text-[#94a3b8] hover:text-[#f1f5f9] hover:border-[#3a3a55] transition-colors"
+            >
+              <Github className="w-4 h-4" />
             </a>
-            <a href="https://www.linkedin.com/in/ankii04/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="w-8 h-8 rounded-lg border border-[#2a2a3d] flex items-center justify-center hover:border-blue-500/40 hover:bg-blue-500/5 transition-colors cursor-pointer">
-              <Linkedin className="w-4 h-4 text-[#94a3b8]" />
+            <a
+              href="https://www.linkedin.com/in/ankii04/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              className="w-8 h-8 rounded-lg border border-[#22222f] flex items-center justify-center text-[#94a3b8] hover:text-[#f1f5f9] hover:border-[#3a3a55] transition-colors"
+            >
+              <Linkedin className="w-4 h-4" />
             </a>
           </div>
         </div>
-        {[
-          { title: 'Product', links: [{name: 'Features', url: '#features'}, {name: 'Pricing', url: '#pricing'}] },
-        ].map(({ title, links }) => (
-          <div key={title}>
-            <h4 className="text-[#f1f5f9] font-semibold text-sm mb-4">{title}</h4>
-            <ul className="space-y-2.5">
-              {links.map((link) => (
-                <li key={link.name}>
-                  <a href={link.url} className="text-[#94a3b8] text-sm hover:text-[#f1f5f9] transition-colors">
-                    {link.name}
+
+        <div className="grid grid-cols-2 gap-x-14 gap-y-6">
+          <div>
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#64748b]">
+              Product
+            </h4>
+            <ul className="mt-3.5 space-y-2.5">
+              {NAV_LINKS.map((l) => (
+                <li key={l.label}>
+                  <a href={l.href} className="text-[13px] text-[#94a3b8] hover:text-[#f1f5f9] transition-colors">
+                    {l.label}
                   </a>
                 </li>
               ))}
             </ul>
           </div>
-        ))}
-      </div>
-      <div className="border-t border-[#2a2a3d] pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <p className="text-[#94a3b8] text-xs">© 2026 ArchMind. All rights reserved.</p>
-        <div className="flex gap-6">
+          <div>
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#64748b]">
+              Built with
+            </h4>
+            <ul className="mt-3.5 space-y-2.5 text-[13px] text-[#94a3b8]">
+              <li className="flex items-center gap-2">
+                <Server className="w-3.5 h-3.5 text-[#64748b]" />
+                Gemini 2.5 Flash
+              </li>
+              <li className="flex items-center gap-2">
+                <Layers className="w-3.5 h-3.5 text-[#64748b]" />
+                React & React Flow
+              </li>
+            </ul>
+          </div>
         </div>
+      </div>
+
+      <div className="mt-10 pt-6 border-t border-[#16161f]">
+        <p className="text-[12px] text-[#64748b]">© 2026 ArchMind. All rights reserved.</p>
       </div>
     </div>
   </footer>
 )
 
-/* ─────────────────────────── Main Page ─────────────────────────── */
-
-/* ─────────────────────────── Docs Reference ─────────────────────────── */
-
-const Docs = () => {
-  const [activeTab, setActiveTab] = useState('stack')
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = (text) => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const vercelJsonText = `{
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
-}`
-
-  return (
-    <section id="docs" className="py-24 px-6 bg-[#0a0a0f] border-t border-[#2a2a3d]">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold font-mono mb-4">
-            <BookOpen className="w-3.5 h-3.5" />
-            Documentation
-          </div>
-          <h2 className="font-heading text-4xl lg:text-5xl font-bold text-[#f1f5f9] mb-4">
-            Technical <GradientText>Reference</GradientText>
-          </h2>
-          <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
-            Deep dive into the architecture, application flow, artificial intelligence engine, and routing system of ArchMind.
-          </p>
-        </div>
-
-        {/* Tab Buttons */}
-        <div className="flex flex-wrap justify-center gap-2 mb-12 border-b border-[#2a2a3d] pb-4">
-          {[
-            { id: 'stack', label: 'Tech Stack', icon: Cpu },
-            { id: 'flow', label: 'System Flow', icon: Network },
-            { id: 'ai', label: 'AI Core Engine', icon: BrainCircuit },
-            { id: 'vercel', label: 'Hosting & Routing', icon: Terminal },
-          ].map((tab) => {
-            const Icon = tab.icon
-            const active = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  active
-                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/40 text-[#f1f5f9] shadow-lg shadow-blue-500/5'
-                    : 'border border-[#2a2a3d] text-[#94a3b8] hover:text-[#f1f5f9] hover:border-[#3b82f6]/30'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${active ? 'text-blue-400' : 'text-[#94a3b8]'}`} />
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Tab Content */}
-        <div className="bg-[#12121a] border border-[#2a2a3d] rounded-2xl p-6 lg:p-10 shadow-2xl relative min-h-[400px]">
-          {activeTab === 'stack' && (
-            <div className="space-y-8 animate-fade-in">
-              <div>
-                <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">Decoupled Full-Stack Architecture</h3>
-                <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
-                  ArchMind is built using a highly decoupled architecture. The frontend handles interactive, responsive rendering, while the backend processes heavy system design prompting, authentication, and persistence, keeping operations lightning fast.
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-6">
-                {/* Frontend Card */}
-                <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-6 hover:border-blue-500/30 transition-colors">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
-                    <Code2 className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <h4 className="text-lg font-bold text-[#f1f5f9] mb-3">Frontend (Client Side)</h4>
-                  <ul className="space-y-2 text-[#94a3b8] text-xs">
-                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">React & Vite:</strong> Declarative, component-driven UI bundled for instant loading.</span></li>
-                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">React Flow:</strong> Canvas engine rendering interactive zoomable/draggable architecture flowcharts.</span></li>
-                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">Zustand:</strong> Lightweight global state managing live editor designs and sessions.</span></li>
-                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">html2pdf.js:</strong> Client-side high-fidelity vector PDF generation of active editor canvases.</span></li>
-                  </ul>
-                </div>
-
-                {/* Backend Card */}
-                <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-6 hover:border-purple-500/30 transition-colors">
-                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
-                    <Server className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <h4 className="text-lg font-bold text-[#f1f5f9] mb-3">Backend (API Engine)</h4>
-                  <ul className="space-y-2 text-[#94a3b8] text-xs">
-                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">Node.js & Express:</strong> Scalable server logic handling REST endpoints, routing, and dynamic CORS.</span></li>
-                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">MongoDB & Mongoose:</strong> Clean object-relational document modeling for design persistence.</span></li>
-                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">JWT & Hashing:</strong> Secure authorization using Json Web Tokens and bcryptjs password encryption.</span></li>
-                  </ul>
-                </div>
-
-                {/* AI / cloud Card */}
-                <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-6 hover:border-cyan-500/30 transition-colors">
-                  <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
-                    <Cpu className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <h4 className="text-lg font-bold text-[#f1f5f9] mb-3">AI Engine & Cloud</h4>
-                  <ul className="space-y-2 text-[#94a3b8] text-xs">
-                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-cyan-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">Gemini 2.5 Flash:</strong> High-speed LLM formulating structural layouts, schemas, API specifications, and stress testing.</span></li>
-                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-cyan-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">Google Generative AI SDK:</strong> Official developer SDK orchestrating reliable API streaming and context variables.</span></li>
-                    <li className="flex items-start gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-cyan-400 mt-0.5 flex-shrink-0" /> <span><strong className="text-[#f1f5f9]">Vercel SPA Hosting:</strong> High-performance static web hosting and routing rewrites.</span></li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'flow' && (
-            <div className="space-y-8 animate-fade-in">
-              <div>
-                <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">Application Lifecycle</h3>
-                <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
-                  Every project generated inside ArchMind traverses a robust step-by-step lifecycle from client entry to visual render:
-                </p>
-              </div>
-
-              <div className="relative pl-6 border-l border-blue-500/30 space-y-6">
-                {[
-                  {
-                    num: '1',
-                    title: 'Authentication & Session initialization',
-                    desc: 'User registers or logs in. Credentials are hashed using bcryptjs. The server generates a signed JSON Web Token (JWT) cached in the browser to authorize subsequently spawned requests securely.'
-                  },
-                  {
-                    num: '2',
-                    title: 'Requirement Compiling',
-                    desc: 'The user creates a new project via the dashboard modal, specifying product goals, anticipated RPS loads, technical constraints, budget ceilings, and framework preferences.'
-                  },
-                  {
-                    num: '3',
-                    title: 'AI Blueprint Generation',
-                    desc: 'The backend securely relays constraints to Gemini 2.5 Flash under a system prompt dictating standard compliance, structure design protocols, and geometric coordinate layouts.'
-                  },
-                  {
-                    num: '4',
-                    title: 'Interactive Editor Render',
-                    desc: 'The parsed blueprint compiles on the client. The user visualizes HLD diagrams dynamically (React Flow), inspects Low-Level classes/methods, parses SQL schemas, analyzes caching layers, and stress-tests with Challenge Mode.'
-                  },
-                  {
-                    num: '5',
-                    title: 'Sharing & Vector Exports',
-                    desc: 'The user can instantly trigger client-side vector PDF downloads, copy standard OpenAPI contracts, or generate unique, shared read-only URLs to distribute live diagrams to coworkers.'
-                  }
-                ].map((step) => (
-                  <div key={step.num} className="relative">
-                    <div className="absolute -left-[35px] top-0 w-4 h-4 rounded-full bg-[#0a0a0f] border-2 border-blue-500 flex items-center justify-center">
-                      <span className="text-[7px] font-bold text-blue-400">{step.num}</span>
-                    </div>
-                    <h4 className="text-[#f1f5f9] font-bold text-base mb-1">{step.title}</h4>
-                    <p className="text-[#94a3b8] text-xs leading-relaxed max-w-3xl">{step.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'ai' && (
-            <div className="space-y-8 animate-fade-in">
-              <div>
-                <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">How the AI Works: The Secret Sauce</h3>
-                <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
-                  ArchMind's core logic lives in the backend system prompts. Our architecture engine coordinates prompting schemas with automatic syntactical recovery models.
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-5">
-                    <h4 className="text-sm font-bold text-blue-400 font-mono mb-2">A. Generator Mode (`generateDesign`)</h4>
-                    <p className="text-xs text-[#94a3b8] leading-relaxed">
-                      Instructs Gemini AI as a veteran staff system architect. The model must output strictly valid JSON conforming to an explicit schema specifying coordinate geometry. Client nodes are algorithmically anchored at top layers, microservices in the mid-tiers, and DB clusters along the bottom coordinates to ensure clean render flows.
-                    </p>
-                  </div>
-
-                  <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-5">
-                    <h4 className="text-sm font-bold text-purple-400 font-mono mb-2">B. Challenge Mode (`generateChallenge`)</h4>
-                    <p className="text-xs text-[#94a3b8] leading-relaxed">
-                      Acts as a resilience engineer stress-testing the primary blueprint. It analyzes the diagram structure to identify SPOFs (Single Points of Failure), network latency bottlenecks, and indexing inefficiencies, and provides severity-rated mitigations.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl p-6 flex flex-col justify-between">
-                  <div>
-                    <h4 className="text-base font-bold text-[#f1f5f9] mb-3">C. JSON Repair Pipeline</h4>
-                    <p className="text-xs text-[#94a3b8] leading-relaxed mb-4">
-                      Large Language Models can occasionally output extraneous conversational prose or invalid markdown code fences that break native browser parsers. To prevent crashes, our server channels all AI outputs through a multi-tiered repair utility:
-                    </p>
-                    <ol className="list-decimal pl-4 text-xs text-[#94a3b8] space-y-2">
-                      <li><strong className="text-[#f1f5f9]">Direct Parse:</strong> Try native parsing first for clean outputs.</li>
-                      <li><strong className="text-[#f1f5f9]">Fence Stripping:</strong> Automatically strip ```json wrapper blocks.</li>
-                      <li><strong className="text-[#f1f5f9]">Brace Extraction:</strong> Isolate and extract content strictly between the outermost '{' and '}' braces.</li>
-                    </ol>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-[#2a2a3d] flex items-center justify-between text-[11px] text-[#94a3b8] font-mono">
-                    <span>Robust Failure Recovery</span>
-                    <span className="text-green-400 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Activated</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'vercel' && (
-            <div className="space-y-8 animate-fade-in">
-              <div>
-                <h3 className="text-2xl font-bold text-[#f1f5f9] mb-2">Vercel SPA Routing Configuration</h3>
-                <p className="text-[#94a3b8] text-sm leading-relaxed max-w-3xl">
-                  Because ArchMind is a client-side Single Page Application (SPA), page routing is processed locally in the browser by React Router. Standard multi-page deployments experience 404 errors when a user refreshes deep links (e.g. `/dashboard`), as the hosting provider checks for physical folder routes. We solve this elegantly by writing global server-side re-route declarations.
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-8 items-start">
-                <div className="space-y-4 text-xs text-[#94a3b8] leading-relaxed">
-                  <div className="flex gap-3">
-                    <div className="w-5 h-5 rounded bg-blue-500/10 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold">1</div>
-                    <p>The web server intercepts incoming routing paths (such as sharing endpoints `/share/123` or `/dashboard`).</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="w-5 h-5 rounded bg-purple-500/10 flex items-center justify-center flex-shrink-0 text-purple-400 font-bold">2</div>
-                    <p>Instead of throwing standard Vercel 404 errors, our rewrite instructs the edge proxy to fallback and serve `index.html` silently.</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="w-5 h-5 rounded bg-cyan-500/10 flex items-center justify-center flex-shrink-0 text-cyan-400 font-bold">3</div>
-                    <p>React Router reads the loaded address bar query client-side, dynamically rendering the dashboard modal or read-only editor flawlessly.</p>
-                  </div>
-                </div>
-
-                <div className="bg-[#0a0a0f] border border-[#2a2a3d] rounded-xl overflow-hidden shadow-lg">
-                  <div className="bg-[#12121a] px-4 py-2 border-b border-[#2a2a3d] flex items-center justify-between">
-                    <span className="text-[10px] text-[#94a3b8] font-mono">vercel.json</span>
-                    <button
-                      onClick={() => handleCopy(vercelJsonText)}
-                      className="text-[10px] flex items-center gap-1 text-[#94a3b8] hover:text-[#f1f5f9] transition-colors"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-3 h-3 text-green-400" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          Copy
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <pre className="p-4 text-[11px] font-mono text-[#f1f5f9] overflow-x-auto leading-relaxed bg-[#0a0a0f]">
-                    {vercelJsonText}
-                  </pre>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  )
-}
+/* ═══════════════════════════════════════════════════════════════ */
 
 const Landing = () => (
-  <div className="min-h-screen bg-[#0a0a0f] text-[#f1f5f9] scroll-smooth">
+  <div className="min-h-screen bg-[#0a0a0f] text-[#f1f5f9] antialiased overflow-x-hidden">
     <Navbar />
     <Hero />
     <Features />
     <HowItWorks />
     <Pricing />
-    <Docs />
-    <CTABanner />
+    <CTA />
     <Footer />
   </div>
 )

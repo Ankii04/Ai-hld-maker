@@ -59,11 +59,6 @@ async function protect(req, res, next) {
       });
     }
 
-    // Automatically grant Pro plan to specifically allowed email (case-insensitive)
-    if (user.email && user.email.toLowerCase() === 'ankitkr1841@gmail.com') {
-      user.plan = 'pro';
-    }
-
     req.user = user;
     next();
   } catch (err) {

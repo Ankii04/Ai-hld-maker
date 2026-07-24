@@ -1,8 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  ArrowLeft,
-  Save,
   Share2,
   Download,
   ChevronDown,
@@ -25,15 +23,26 @@ import { toast } from 'react-hot-toast'
 import { exportTabAsPDF, generateOpenAPIYAML } from '../utils/exportPDF'
 import RequirementsPanel from '../components/editor/RequirementsPanel'
 import TabBar from '../components/editor/TabBar'
-import HLDTab from '../components/editor/HLDTab'
-import LLDTab from '../components/editor/LLDTab'
-import DatabaseTab from '../components/editor/DatabaseTab'
-import APITab from '../components/editor/APITab'
-import ScalabilityTab from '../components/editor/ScalabilityTab'
-import ChallengeTab from '../components/editor/ChallengeTab'
-import HistoryTab from '../components/editor/HistoryTab'
-import SandboxTab from '../components/editor/SandboxTab'
-import CanvasTab from '../components/editor/CanvasTab'
+
+// Each tab is a separate chunk, fetched only when the user actually opens
+// it — the previous eager imports here put every tab (including the ~60KB
+// SandboxTab source and dagre/xyflow-heavy diagram tabs) into one ~5MB
+// initial editor bundle.
+const HLDTab = lazy(() => import('../components/editor/HLDTab'))
+const LLDTab = lazy(() => import('../components/editor/LLDTab'))
+const DatabaseTab = lazy(() => import('../components/editor/DatabaseTab'))
+const APITab = lazy(() => import('../components/editor/APITab'))
+const ScalabilityTab = lazy(() => import('../components/editor/ScalabilityTab'))
+const ChallengeTab = lazy(() => import('../components/editor/ChallengeTab'))
+const HistoryTab = lazy(() => import('../components/editor/HistoryTab'))
+const SandboxTab = lazy(() => import('../components/editor/SandboxTab'))
+const CanvasTab = lazy(() => import('../components/editor/CanvasTab'))
+
+const TabLoader = () => (
+  <div className="flex-1 flex items-center justify-center py-24">
+    <div className="spinner" />
+  </div>
+)
 
 
 /* ─────────────────────────── Upgrade Modal ─────────────────────────── */
@@ -47,73 +56,90 @@ const proPerksList = [
   'Priority AI generation',
 ]
 
-const UpgradeModal = ({ onClose }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-    <div className="relative w-full max-w-md">
-      {/* Outer glow */}
-      <div className="absolute -inset-px bg-gradient-to-r from-yellow-500/40 to-purple-500/40 rounded-2xl blur-[2px]" />
-      <div className="relative bg-[#12121a] border border-yellow-500/30 rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-5 bg-gradient-to-r from-yellow-500/10 to-purple-500/10 border-b border-[#2a2a3d]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
-                <Crown className="w-5 h-5 text-yellow-400" />
+const UpgradeModal = ({ onClose, reason }) => {
+  const navigate = useNavigate()
+
+  const handleUpgradeClick = () => {
+    onClose()
+    navigate('/upgrade')
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md">
+        {/* Outer glow */}
+        <div className="absolute -inset-px bg-gradient-to-r from-yellow-500/40 to-purple-500/40 rounded-2xl blur-[2px]" />
+        <div className="relative bg-[#12121a] border border-yellow-500/30 rounded-2xl shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-5 bg-gradient-to-r from-yellow-500/10 to-purple-500/10 border-b border-[#2a2a3d]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
+                  <Crown className="w-5 h-5 text-yellow-400" />
+                </div>
+                <div>
+                  <h2 className="font-heading text-lg font-bold text-[#f1f5f9]">Upgrade to Pro</h2>
+                  <p className="text-xs text-[#94a3b8]">
+                    {reason === 'limit'
+                      ? "You've used all 3 free designs this month"
+                      : 'Unlock the full ArchMind experience'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-heading text-lg font-bold text-[#f1f5f9]">Upgrade to Pro</h2>
-                <p className="text-xs text-[#94a3b8]">Unlock the full ArchMind experience</p>
-              </div>
+              <button
+                onClick={onClose}
+                className="w-7 h-7 rounded-lg hover:bg-[#1a1a28] flex items-center justify-center text-[#94a3b8] hover:text-[#f1f5f9] transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-6">
+            <div className="flex items-end gap-1 mb-5">
+              <span className="text-4xl font-bold text-[#f1f5f9]">$19</span>
+              <span className="text-[#94a3b8] mb-1">/month</span>
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold">
+                7-day free trial
+              </span>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              {proPerksList.map((perk) => (
+                <div key={perk} className="flex items-center gap-2.5">
+                  <CheckCircle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                  <span className="text-sm text-[#f1f5f9]">{perk}</span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleUpgradeClick}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold text-sm hover:from-yellow-400 hover:to-orange-400 transition-all duration-200 shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/40"
+            >
+              See Pro Plans
+            </button>
             <button
               onClick={onClose}
-              className="w-7 h-7 rounded-lg hover:bg-[#1a1a28] flex items-center justify-center text-[#94a3b8] hover:text-[#f1f5f9] transition-colors"
+              className="w-full py-2.5 rounded-xl text-[#94a3b8] text-sm hover:text-[#f1f5f9] transition-colors mt-2"
             >
-              <X className="w-4 h-4" />
+              Maybe later
             </button>
           </div>
         </div>
-
-        {/* Body */}
-        <div className="px-6 py-6">
-          <div className="flex items-end gap-1 mb-5">
-            <span className="text-4xl font-bold text-[#f1f5f9]">$19</span>
-            <span className="text-[#94a3b8] mb-1">/month</span>
-            <span className="ml-2 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold">
-              7-day free trial
-            </span>
-          </div>
-
-          <div className="space-y-3 mb-6">
-            {proPerksList.map((perk) => (
-              <div key={perk} className="flex items-center gap-2.5">
-                <CheckCircle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-                <span className="text-sm text-[#f1f5f9]">{perk}</span>
-              </div>
-            ))}
-          </div>
-
-          <button className="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold text-sm hover:from-yellow-400 hover:to-orange-400 transition-all duration-200 shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/40">
-            Upgrade to Pro — $19/mo
-          </button>
-          <button
-            onClick={onClose}
-            className="w-full py-2.5 rounded-xl text-[#94a3b8] text-sm hover:text-[#f1f5f9] transition-colors mt-2"
-          >
-            Maybe later
-          </button>
-        </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 /* ─────────────────────────── Export Dropdown ─────────────────────────── */
 
 const exportOptions = [
-  { label: 'Export as PDF', icon: FileText, pro: true },
+  { label: 'Export as PDF', icon: FileText, pro: false },
   { label: 'Export as JSON', icon: Globe, pro: false },
+  { label: 'Copy OpenAPI YAML', icon: Copy, pro: true },
 ]
 
 const ExportDropdown = ({ currentDesign, activeTab, onUpgradeClick, isPro }) => {
@@ -179,11 +205,11 @@ const ExportDropdown = ({ currentDesign, activeTab, onUpgradeClick, isPro }) => 
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-center gap-1.5 px-2.5 sm:px-4 py-2 rounded-lg border border-[#2a2a3d] text-[#94a3b8] hover:text-[#f1f5f9] hover:border-blue-500/30 text-sm font-medium transition-all duration-200"
+        className="btn btn-secondary btn-sm"
       >
-        <Download className="w-4 h-4 flex-shrink-0" />
+        <Download className="w-3.5 h-3.5 flex-shrink-0" />
         <span className="hidden sm:inline">Export</span>
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform flex-shrink-0 ${open ? 'rotate-180' : 'hidden sm:inline'}`} />
+        <ChevronDown className={`w-3 h-3 transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-2 w-52 bg-[#12121a] border border-[#2a2a3d] rounded-xl shadow-2xl z-30 overflow-hidden p-1.5">
@@ -196,7 +222,7 @@ const ExportDropdown = ({ currentDesign, activeTab, onUpgradeClick, isPro }) => 
               <Icon className="w-4 h-4" />
               {label}
               {pro && !isPro && (
-                <span className="ml-auto flex items-center gap-0.5 text-[9px] font-bold text-yellow-400">
+                <span className="ml-auto flex items-center gap-0.5 text-[11px] font-bold text-yellow-400">
                   <Crown className="w-2.5 h-2.5" />
                   PRO
                 </span>
@@ -246,7 +272,7 @@ const EditableTitle = ({ value, onChange, onBlur }) => {
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commitEdit}
         onKeyDown={handleKey}
-        className="bg-[#1a1a28] border border-blue-500/50 rounded-lg px-3 py-1 text-[#f1f5f9] font-heading font-semibold text-base focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-w-[160px] max-w-xs"
+        className="bg-[#1a1a28] border border-blue-500/50 rounded-lg px-2 py-1 text-[#f1f5f9] font-medium text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-w-[200px] max-w-md"
         autoFocus
       />
     )
@@ -255,38 +281,57 @@ const EditableTitle = ({ value, onChange, onBlur }) => {
   return (
     <button
       onClick={startEdit}
-      className="group flex items-center gap-1.5 hover:bg-[#1a1a28] px-3 py-1 rounded-lg transition-colors"
+      title="Click to rename"
+      className="group flex items-center gap-2 px-2 py-1 -mx-2 rounded-lg border-b border-dashed border-transparent hover:border-[#3a3a55] transition-colors min-w-0"
     >
-      <span className="font-heading font-semibold text-base text-[#f1f5f9] truncate max-w-[100px] sm:max-w-[200px] lg:max-w-xs">
+      <span className="font-medium text-sm text-[#f1f5f9] truncate max-w-[160px] sm:max-w-[280px] lg:max-w-md">
         {value || 'Untitled Design'}
       </span>
-      <Pencil className="w-3.5 h-3.5 text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Pencil className="w-3 h-3 flex-shrink-0 text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity" />
     </button>
   )
 }
 
-/* ─────────────────────────── Save Status ─────────────────────────── */
+/* ─────────────────────────── Autosave Status ─────────────────────────── */
 
-const SaveStatus = ({ status }) => {
+const formatAgo = (ts) => {
+  if (!ts) return null
+  const s = Math.floor((Date.now() - ts) / 1000)
+  if (s < 10) return 'just now'
+  if (s < 60) return `${s}s ago`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m ago`
+  return `${Math.floor(m / 60)}h ago`
+}
+
+const AutosaveStatus = ({ status, lastSavedAt }) => {
+  // Re-render every 30s so the "Xm ago" text stays honest
+  const [, tick] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => tick((x) => x + 1), 30000)
+    return () => clearInterval(t)
+  }, [])
+
   if (status === 'saving') return (
-    <div className="flex items-center gap-1.5 text-xs text-[#94a3b8]">
+    <span className="flex items-center gap-1.5 text-xs text-[#94a3b8] whitespace-nowrap">
       <Loader2 className="w-3 h-3 animate-spin" />
       Saving…
-    </div>
-  )
-  if (status === 'saved') return (
-    <div className="flex items-center gap-1.5 text-xs text-green-400">
-      <CheckCircle className="w-3 h-3" />
-      Saved
-    </div>
+    </span>
   )
   if (status === 'error') return (
-    <div className="flex items-center gap-1.5 text-xs text-red-400">
+    <span className="flex items-center gap-1.5 text-xs text-red-400 whitespace-nowrap">
       <AlertCircle className="w-3 h-3" />
       Save failed
-    </div>
+    </span>
   )
-  return null
+  const ago = formatAgo(lastSavedAt)
+  if (!ago) return null
+  return (
+    <span className="flex items-center gap-2 text-xs text-[#94a3b8] whitespace-nowrap">
+      <span className="w-1.5 h-1.5 rounded-full bg-green-400" aria-hidden="true" />
+      Saved · {ago}
+    </span>
+  )
 }
 
 /* ─────────────────────────── Loading / Error States ─────────────────────────── */
@@ -314,7 +359,7 @@ const Editor = () => {
     isSaving,
     isGenerating,
     isChallenging,
-    generationStepIndex,
+    generationStartedAt,
     error,
     fetchDesign,
     updateDesign,
@@ -326,10 +371,21 @@ const Editor = () => {
   } = useDesignStore()
 
   const [showUpgrade, setShowUpgrade] = useState(false)
-  const [saveStatus, setSaveStatus] = useState(null) // 'saving' | 'saved' | 'error' | null
+  const [saveStatus, setSaveStatus] = useState(null) // 'saving' | 'error' | null
+  const [lastSavedAt, setLastSavedAt] = useState(null)
   const [activeTab, setActiveTab] = useState('hld')
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024)
-  const saveStatusTimeout = useRef(null)
+  const contentRef = useRef(null)
+
+  /* Switching tab collapses the requirements sidebar (it's only needed while
+     configuring generation, and otherwise steals width from the content) and
+     resets the panel scroll to the top — canvas/diagram tabs used to open
+     mid-scroll because the previous tab's scroll offset was retained. */
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab)
+    setIsSidebarOpen(false)
+    requestAnimationFrame(() => { if (contentRef.current) contentRef.current.scrollTop = 0 })
+  }, [])
 
   /* load design */
   useEffect(() => {
@@ -341,38 +397,53 @@ const Editor = () => {
     fetchMe()
   }, [id, fetchDesign, setCurrentDesign, fetchMe])
 
-  /* watch for UPGRADE_REQUIRED errors */
-  useEffect(() => {
-    if (error && error.includes('UPGRADE_REQUIRED')) {
-      setShowUpgrade(true)
-    }
-  }, [error])
-
-  /* track isSaving → update saveStatus */
-  useEffect(() => {
-    if (isSaving) {
-      setSaveStatus('saving')
-      clearTimeout(saveStatusTimeout.current)
-    }
-  }, [isSaving])
+  const [limitReached, setLimitReached] = useState(false)
 
   const handleSave = useCallback(async () => {
     if (!currentDesign) return
     setSaveStatus('saving')
-    clearTimeout(saveStatusTimeout.current)
-    try {
-      await updateDesign(currentDesign._id || currentDesign.id, {
-        title: currentDesign.title,
-        requirements: currentDesign.requirements,
-        hld: currentDesign.hld,
-      })
-      setSaveStatus('saved')
-    } catch {
+    const res = await updateDesign(currentDesign._id || currentDesign.id, {
+      title: currentDesign.title,
+      requirements: currentDesign.requirements,
+      hld: currentDesign.hld,
+    })
+    if (res?.success) {
+      setSaveStatus(null)
+      setLastSavedAt(Date.now())
+    } else {
       setSaveStatus('error')
-    } finally {
-      saveStatusTimeout.current = setTimeout(() => setSaveStatus(null), 3000)
     }
   }, [currentDesign, updateDesign])
+
+  /* ── Autosave ─────────────────────────────────────────────
+   * Debounced save whenever title/requirements/hld change. The first
+   * snapshot per design id is the freshly-fetched state — skipped, so
+   * loading a design never triggers a write. Replaces the manual Save
+   * button; Ctrl+S still forces an immediate save. */
+  const autosaveRef = useRef({ designId: null, snapshot: null })
+  useEffect(() => {
+    if (!currentDesign) return
+    const designId = currentDesign._id || currentDesign.id
+    const snapshot = JSON.stringify({
+      t: currentDesign.title,
+      r: currentDesign.requirements,
+      h: currentDesign.hld,
+    })
+
+    if (autosaveRef.current.designId !== designId) {
+      // New design loaded — baseline it, mark as saved-as-of-now
+      autosaveRef.current = { designId, snapshot }
+      setLastSavedAt(Date.now())
+      return
+    }
+    if (autosaveRef.current.snapshot === snapshot) return
+
+    const timer = setTimeout(() => {
+      autosaveRef.current.snapshot = snapshot
+      handleSave()
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [currentDesign, handleSave])
 
   const handleTitleChange = (newTitle) => {
     if (!currentDesign) return
@@ -380,27 +451,32 @@ const Editor = () => {
   }
 
   const handleTitleBlur = () => {
-    handleSave()
+    // Autosave effect picks the change up; nothing to force here.
   }
 
   const handleGenerate = async (inputs) => {
-    try {
-      const designId = currentDesign?._id || currentDesign?.id
-      const formattedInputs = {
-        productName: inputs.productName,
-        requirements: inputs.requirements,
-        constraints: {
-          scale: inputs.scale,
-          budget: inputs.budget,
-          expectedUsers: inputs.expectedUsers,
-          techPreferences: inputs.techPreferences,
-        }
+    const designId = currentDesign?._id || currentDesign?.id
+    const formattedInputs = {
+      productName: inputs.productName,
+      requirements: inputs.requirements,
+      constraints: {
+        scale: inputs.scale,
+        budget: inputs.budget,
+        expectedUsers: inputs.expectedUsers,
+        techPreferences: inputs.techPreferences,
       }
-      await generateDesign(designId, formattedInputs)
-    } catch (err) {
-      if (err?.message?.includes('UPGRADE_REQUIRED')) {
-        setShowUpgrade(true)
-      }
+    }
+    const res = await generateDesign(designId, formattedInputs)
+    if (res?.success) {
+      toast.success('Blueprint generated successfully!')
+      setActiveTab('hld')
+    } else if (res?.code === 'MONTHLY_LIMIT_REACHED') {
+      setLimitReached(true)
+      setShowUpgrade(true)
+    } else if (res?.code === 'UPGRADE_REQUIRED') {
+      setShowUpgrade(true)
+    } else if (res?.message) {
+      toast.error(res.message)
     }
   }
 
@@ -416,13 +492,11 @@ const Editor = () => {
         const shareUrl = `${window.location.origin}/share/${res.shareId}`
         await navigator.clipboard.writeText(shareUrl)
         toast.success('Share link copied to clipboard', { id: toastId })
+      } else if (res.code === 'UPGRADE_REQUIRED') {
+        toast.dismiss(toastId)
+        setShowUpgrade(true)
       } else {
-        if (res.message?.includes('UPGRADE_REQUIRED')) {
-          toast.dismiss(toastId)
-          setShowUpgrade(true)
-        } else {
-          toast.error(res.message || 'Failed to generate share link', { id: toastId })
-        }
+        toast.error(res.message || 'Failed to generate share link', { id: toastId })
       }
     } catch (err) {
       toast.error('Failed to generate share link', { id: toastId })
@@ -459,64 +533,52 @@ const Editor = () => {
     <div className="h-screen flex flex-col bg-[#0a0a0f] text-[#f1f5f9] overflow-hidden">
       {/* ── Fixed Header ── */}
       <header className="flex-shrink-0 border-b border-[#2a2a3d] bg-[#0a0a0f]/95 backdrop-blur-xl z-30">
-        <div className="flex items-center justify-between px-4 py-3 gap-3">
-          {/* Left: back + title */}
-          <div className="flex items-center gap-2 min-w-0">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="flex-shrink-0 w-8 h-8 rounded-lg border border-[#2a2a3d] flex items-center justify-center text-[#94a3b8] hover:text-[#f1f5f9] hover:border-blue-500/30 hover:bg-[#12121a] transition-all duration-200"
-              title="Back to Dashboard"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-
+        <div className="flex items-center justify-between px-5 h-14 gap-4">
+          {/* Left: sidebar toggle + breadcrumb */}
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setIsSidebarOpen(v => !v)}
               className={`flex-shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center text-[#94a3b8] hover:text-[#f1f5f9] transition-all duration-200 ${
-                isSidebarOpen ? 'border-blue-500/30 text-blue-400 bg-blue-500/5 hover:border-blue-500/50' : 'border-[#2a2a3d] hover:border-blue-500/30 hover:bg-[#12121a]'
+                isSidebarOpen ? 'border-blue-500/30 text-blue-400 bg-blue-500/5 hover:border-blue-500/50' : 'border-[#2a2a3d] hover:border-[#3a3a55] hover:bg-[#12121a]'
               }`}
               title={isSidebarOpen ? "Hide requirements sidebar" : "Show requirements sidebar"}
+              aria-label={isSidebarOpen ? "Hide requirements sidebar" : "Show requirements sidebar"}
             >
               <Menu className="w-4 h-4" />
             </button>
 
-            {/* Logo */}
-            <div className="hidden md:flex items-center gap-1.5 mr-2">
-              <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                <BrainCircuit className="w-3.5 h-3.5 text-white" />
+            {/* Breadcrumb: Dashboard / <editable title> */}
+            <nav className="flex items-center gap-2 min-w-0" aria-label="Breadcrumb">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="text-[13px] text-[#94a3b8] hover:text-[#f1f5f9] transition-colors whitespace-nowrap"
+              >
+                Dashboard
+              </button>
+              <span className="text-[13px] text-[#94a3b8]" aria-hidden="true">/</span>
+              <div className="min-w-0">
+                <EditableTitle
+                  value={currentDesign?.title || 'Untitled Design'}
+                  onChange={handleTitleChange}
+                  onBlur={handleTitleBlur}
+                />
               </div>
-            </div>
-
-            <div className="hidden md:block w-px h-4 bg-[#2a2a3d]" />
-
-            {/* Editable title */}
-            <div className="min-w-0 ml-2">
-              <EditableTitle
-                value={currentDesign?.title || 'Untitled Design'}
-                onChange={handleTitleChange}
-                onBlur={handleTitleBlur}
-              />
-            </div>
-
-            {/* Save status */}
-            <div className="hidden sm:block ml-2">
-              <SaveStatus status={saveStatus} />
-            </div>
+            </nav>
           </div>
 
-          {/* Right: actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Right: autosave status + quiet actions */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="hidden sm:block">
+              <AutosaveStatus status={saveStatus} lastSavedAt={lastSavedAt} />
+            </div>
+
             <button
-              onClick={handleSave}
-              disabled={isSaving || !currentDesign}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#2a2a3d] text-[#94a3b8] hover:text-[#f1f5f9] hover:border-blue-500/30 text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleShare}
+              disabled={!currentDesign}
+              className="btn btn-secondary btn-sm"
             >
-              {isSaving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              <span className="hidden sm:inline">Save</span>
+              <Share2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Share</span>
             </button>
 
             <ExportDropdown
@@ -525,23 +587,6 @@ const Editor = () => {
               onUpgradeClick={() => setShowUpgrade(true)}
               isPro={isPro}
             />
-
-            <button
-              onClick={handleShare}
-              disabled={!currentDesign}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#2a2a3d] text-[#94a3b8] hover:text-[#f1f5f9] hover:border-blue-500/30 text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Share</span>
-            </button>
-
-            <button
-              onClick={() => setShowUpgrade(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/15 transition-colors text-xs font-bold"
-            >
-              <Crown className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Pro</span>
-            </button>
           </div>
         </div>
       </header>
@@ -574,7 +619,7 @@ const Editor = () => {
                 user={user}
                 isGenerating={isGenerating}
                 isChallenging={isChallenging}
-                generationStep={generationStepIndex}
+                generationStartedAt={generationStartedAt}
                 onGenerate={handleGenerate}
                 onChallenge={() => {
                   challengeDesign(currentDesign?._id || currentDesign?.id)
@@ -590,40 +635,42 @@ const Editor = () => {
               <>
                 <TabBar
                   activeTab={activeTab}
-                  onTabChange={setActiveTab}
+                  onTabChange={handleTabChange}
                   onExportPDF={handleExportPDF}
                   hasDesign={!!currentDesign}
+                  design={currentDesign}
                 />
-                
-                {/* Active Tab Panel View */}
-                <div className="flex-1 overflow-y-auto min-h-0">
-                  {activeTab === 'hld' && (
-                    <HLDTab
-                      design={currentDesign}
-                      onNodesChange={updateLocalNodes}
-                      onEdgesChange={updateLocalEdges}
-                    />
-                  )}
-                  {activeTab === 'lld' && <LLDTab design={currentDesign} />}
-                  {activeTab === 'database' && <DatabaseTab design={currentDesign} />}
-                  {activeTab === 'apis' && <APITab design={currentDesign} />}
-                  {activeTab === 'scalability' && <ScalabilityTab design={currentDesign} />}
-                  {activeTab === 'canvas' && <CanvasTab design={currentDesign} />}
-                  {activeTab === 'challenge' && (
-                    <ChallengeTab
-                      design={currentDesign}
-                      onChallenge={() => challengeDesign(currentDesign?._id || currentDesign?.id)}
-                      isChallenging={isChallenging}
-                      user={user}
-                    />
-                  )}
-                   {activeTab === 'sandbox' && (
-                    <SandboxTab design={currentDesign} />
-                  )}
-                  {activeTab === 'history' && (
-                    <HistoryTab design={currentDesign} />
-                  )}
 
+                {/* Active Tab Panel View */}
+                <div ref={contentRef} className="flex-1 overflow-y-auto min-h-0">
+                  <Suspense fallback={<TabLoader />}>
+                    {activeTab === 'hld' && (
+                      <HLDTab
+                        design={currentDesign}
+                        onNodesChange={updateLocalNodes}
+                        onEdgesChange={updateLocalEdges}
+                      />
+                    )}
+                    {activeTab === 'lld' && <LLDTab design={currentDesign} />}
+                    {activeTab === 'database' && <DatabaseTab design={currentDesign} />}
+                    {activeTab === 'apis' && <APITab design={currentDesign} />}
+                    {activeTab === 'scalability' && <ScalabilityTab design={currentDesign} />}
+                    {activeTab === 'canvas' && <CanvasTab design={currentDesign} />}
+                    {activeTab === 'challenge' && (
+                      <ChallengeTab
+                        design={currentDesign}
+                        onChallenge={() => challengeDesign(currentDesign?._id || currentDesign?.id)}
+                        isChallenging={isChallenging}
+                        user={user}
+                      />
+                    )}
+                    {activeTab === 'sandbox' && (
+                      <SandboxTab design={currentDesign} />
+                    )}
+                    {activeTab === 'history' && (
+                      <HistoryTab design={currentDesign} />
+                    )}
+                  </Suspense>
                 </div>
               </>
             ) : (
@@ -651,7 +698,12 @@ const Editor = () => {
       )}
 
       {/* Upgrade Modal */}
-      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
+      {showUpgrade && (
+        <UpgradeModal
+          onClose={() => { setShowUpgrade(false); setLimitReached(false) }}
+          reason={limitReached ? 'limit' : undefined}
+        />
+      )}
     </div>
   )
 }

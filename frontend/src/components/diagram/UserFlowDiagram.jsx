@@ -57,12 +57,12 @@ function ScreenNode({ data, selected }) {
       />
 
       {data?.screenType === 'entry' && (
-        <span className="inline-block mb-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-[#16a34a22] text-[#4ade80] border border-[#16a34a44]">
+        <span className="inline-block mb-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#16a34a22] text-[#4ade80] border border-[#16a34a44]">
           Entry
         </span>
       )}
       {data?.screenType === 'exit' && (
-        <span className="inline-block mb-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-[#1e293b] text-[#64748b] border border-[#47556933]">
+        <span className="inline-block mb-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#1e293b] text-[#64748b] border border-[#47556933]">
           Exit
         </span>
       )}
@@ -70,7 +70,7 @@ function ScreenNode({ data, selected }) {
         {data?.label || 'Screen'}
       </p>
       {data?.description && (
-        <p className="text-[#94a3b8] text-[10px] mt-1 leading-snug">
+        <p className="text-[#94a3b8] text-[11px] mt-1 leading-snug">
           {data.description}
         </p>
       )}
@@ -256,7 +256,7 @@ export default function UserFlowDiagram({
               className="w-3 h-3 rounded-sm border"
               style={{ borderColor: color, background: color + '22' }}
             />
-            <span className="text-[10px] text-[#94a3b8]">{label}</span>
+            <span className="text-[11px] text-[#94a3b8]">{label}</span>
           </div>
         ))}
       </div>
@@ -291,7 +291,7 @@ export default function UserFlowDiagram({
             />
           </ReactFlow>
         ) : (
-          <div className="flex items-center justify-center h-full text-[#4a4a6a] text-sm">
+          <div className="flex items-center justify-center h-full text-[#94a3b8] text-sm">
             No user flow data available
           </div>
         )}

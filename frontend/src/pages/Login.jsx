@@ -83,7 +83,7 @@ const LeftPanel = () => (
           <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
           <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
-          <span className="ml-2 text-[10px] text-[#94a3b8] font-mono">api-spec.yaml</span>
+          <span className="ml-2 text-[11px] text-[#94a3b8] font-mono">api-spec.yaml</span>
         </div>
         <div className="p-4 space-y-1">
           {codeLines.map((line, i) => (
@@ -94,7 +94,7 @@ const LeftPanel = () => (
         </div>
         <div className="px-4 py-2 border-t border-[#2a2a3d] flex items-center gap-2">
           <Zap className="w-3 h-3 text-yellow-400" />
-          <span className="text-[10px] text-[#94a3b8] font-mono">AI-generated • OpenAPI 3.0</span>
+          <span className="text-[11px] text-[#94a3b8] font-mono">AI-generated • OpenAPI 3.0</span>
           <div className="ml-auto w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
         </div>
       </div>
@@ -116,8 +116,8 @@ const LeftPanel = () => (
       ].map(({ icon: Icon, label, val }) => (
         <div key={label} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#12121a]/80 border border-[#2a2a3d] backdrop-blur-sm">
           <Icon className="w-3.5 h-3.5 text-blue-400" />
-          <span className="text-[10px] text-[#94a3b8] font-mono">{label}</span>
-          <span className="text-[10px] text-blue-400 font-mono ml-1">{val}</span>
+          <span className="text-[11px] text-[#94a3b8] font-mono">{label}</span>
+          <span className="text-[11px] text-blue-400 font-mono ml-1">{val}</span>
         </div>
       ))}
     </div>

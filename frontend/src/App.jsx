@@ -11,6 +11,7 @@ const Signup      = lazy(() => import('./pages/Signup'))
 const Dashboard   = lazy(() => import('./pages/Dashboard'))
 const Editor      = lazy(() => import('./pages/Editor'))
 const PublicShare = lazy(() => import('./pages/PublicShare'))
+const Upgrade     = lazy(() => import('./pages/Upgrade'))
 const NotFound    = lazy(() => import('./pages/NotFound'))
 
 /* ─── Full-screen loading fallback ────────────────────────────── */
@@ -90,7 +91,7 @@ const PublicShareWrapper = () => {
 
 /* ─── Toaster configuration ─────────────────────────────────────── */
 const toasterOptions = {
-  position: 'top-right',
+  position: 'bottom-right',
   gutter: 10,
   toastOptions: {
     duration: 4000,
@@ -204,9 +205,19 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/upgrade"
+            element={
+              <ProtectedRoute>
+                <Upgrade />
+              </ProtectedRoute>
+            }
+          />
 
           {/* ── 404 fallback ── */}
-          <Route path="*" element={<Navigate to="/404" replace />} />
+          {/* Rendered in place (no redirect) so the browser keeps the
+              original URL and the Back button works as expected. */}
+          <Route path="*" element={<NotFound />} />
           <Route path="/404" element={<NotFound />} />
         </Routes>
       </Suspense>

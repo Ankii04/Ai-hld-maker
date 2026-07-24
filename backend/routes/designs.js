@@ -72,10 +72,13 @@ router.use(protect);
 
 router.get('/', async (req, res, next) => {
   try {
+    // hld is projected down to node TYPES only — the dashboard card renders a
+    // composition bar (how many services / stores / caches / queues), not a
+    // diagram, so ids, positions and edges are all unnecessary weight here.
     const designs = await Design.find({ userId: req.user._id })
       .sort({ createdAt: -1 })
       .limit(50)
-      .select('title summary status productName tags createdAt updatedAt isPublic shareId')
+      .select('title summary status productName tags createdAt updatedAt isPublic shareId starred requirements constraints hld.nodes.type')
       .lean();
 
     res.status(200).json({
@@ -164,6 +167,8 @@ router.put('/:id', async (req, res, next) => {
       constraints,
       productName,
       isPublic,
+      starred,
+      canvas,
     } = req.body;
 
     // Partial update — only update provided fields
@@ -172,6 +177,20 @@ router.put('/:id', async (req, res, next) => {
     if (constraints !== undefined) design.constraints = { ...design.constraints, ...constraints };
     if (productName !== undefined) design.productName = productName.trim();
     if (isPublic !== undefined && typeof isPublic === 'boolean') design.isPublic = isPublic;
+    if (starred !== undefined && typeof starred === 'boolean') design.starred = starred;
+
+    // Whiteboard (Canvas tab) state — cap size to prevent storage abuse
+    if (canvas !== undefined) {
+      if (canvas !== null && typeof canvas !== 'object') {
+        return res.status(400).json({ success: false, message: 'canvas must be an object or null.' });
+      }
+      const canvasSize = canvas ? JSON.stringify(canvas).length : 0;
+      if (canvasSize > 2_000_000) {
+        return res.status(413).json({ success: false, message: 'Canvas state is too large (max 2MB).' });
+      }
+      design.canvas = canvas;
+      design.markModified('canvas');
+    }
 
     // Allow direct HLD node/edge overrides (whiteboard drag saves)
     if (req.body.hld) {
@@ -225,20 +244,30 @@ router.post('/:id/generate', async (req, res, next) => {
     const design = await findOwnedDesign(req.params.id, req.user._id, res);
     if (!design) return;
 
-    // ── Monthly limit check for free plan ────────────────────────────────────
+    // ── Monthly limit check for free plan (atomic reserve-then-generate) ─────
+    // Reset the counter if a new month has started, then atomically claim a
+    // generation slot in one conditional update. This closes the race where
+    // two parallel requests could both read "under limit" and both proceed.
+    let reservedSlot = false;
     if (req.user.plan === 'free') {
-      // Check and reset monthly counter if new month
-      const freshUser = await User.checkMonthlyLimit(req.user._id);
+      await User.checkMonthlyLimit(req.user._id);
 
-      if (freshUser.designsGeneratedThisMonth >= FREE_PLAN_MONTHLY_LIMIT) {
+      const reserved = await User.findOneAndUpdate(
+        { _id: req.user._id, designsGeneratedThisMonth: { $lt: FREE_PLAN_MONTHLY_LIMIT } },
+        { $inc: { designsGeneratedThisMonth: 1 } },
+        { new: true }
+      );
+
+      if (!reserved) {
         return res.status(403).json({
           success: false,
           error: 'MONTHLY_LIMIT_REACHED',
           message: `Free plan allows ${FREE_PLAN_MONTHLY_LIMIT} AI generations per month. Upgrade to Pro for unlimited access.`,
           limit: FREE_PLAN_MONTHLY_LIMIT,
-          used: freshUser.designsGeneratedThisMonth,
+          used: FREE_PLAN_MONTHLY_LIMIT,
         });
       }
+      reservedSlot = true;
     }
 
     // ── Update status to generating ───────────────────────────────────────────
@@ -258,6 +287,10 @@ router.post('/:id/generate', async (req, res, next) => {
       // Mark design as error before rethrowing
       design.status = 'error';
       await design.save();
+      // Release the reserved free-plan slot since generation never completed
+      if (reservedSlot) {
+        await User.findByIdAndUpdate(req.user._id, { $inc: { designsGeneratedThisMonth: -1 } });
+      }
       return res.status(502).json({
         success: false,
         message: `AI generation failed: ${aiErr.message}`,
@@ -287,10 +320,13 @@ router.post('/:id/generate', async (req, res, next) => {
 
     await design.save();
 
-    // ── Increment monthly counter ─────────────────────────────────────────────
-    await User.findByIdAndUpdate(req.user._id, {
-      $inc: { designsGeneratedThisMonth: 1 },
-    });
+    // Pro users aren't gated, but we still track usage for stats — free users
+    // already had their slot atomically reserved above.
+    if (!reservedSlot) {
+      await User.findByIdAndUpdate(req.user._id, {
+        $inc: { designsGeneratedThisMonth: 1 },
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -595,14 +631,7 @@ router.post('/:id/versions/:versionId/rollback', async (req, res, next) => {
       });
     }
 
-    // Rollback the design document
-    if (snapshot.hld) design.hld = snapshot.hld;
-    if (snapshot.lld) design.lld = snapshot.lld;
-    if (snapshot.database) design.database = snapshot.database;
-    if (snapshot.scalability) design.scalability = snapshot.scalability;
-    if (snapshot.uiux) design.uiux = snapshot.uiux;
-
-    // Also commit a new rollback message to prevent losing the current state
+    // Snapshot the CURRENT workspace state first, so nothing is lost by the rollback
     const latest = await Version.findOne({ designId: design._id })
       .sort({ versionNumber: -1 })
       .lean();
@@ -611,7 +640,7 @@ router.post('/:id/versions/:versionId/rollback', async (req, res, next) => {
     await Version.create({
       designId: design._id,
       versionNumber: nextVersion,
-      commitMessage: `Rollback to Version v${snapshot.versionNumber}`,
+      commitMessage: `Auto-save before rollback to v${snapshot.versionNumber}`,
       hld: design.hld,
       lld: design.lld,
       database: design.database,
@@ -619,6 +648,13 @@ router.post('/:id/versions/:versionId/rollback', async (req, res, next) => {
       uiux: design.uiux,
       authorId: req.user._id,
     });
+
+    // Now roll the design document back to the selected snapshot
+    if (snapshot.hld) design.hld = snapshot.hld;
+    if (snapshot.lld) design.lld = snapshot.lld;
+    if (snapshot.database) design.database = snapshot.database;
+    if (snapshot.scalability) design.scalability = snapshot.scalability;
+    if (snapshot.uiux) design.uiux = snapshot.uiux;
 
     await design.save();
 

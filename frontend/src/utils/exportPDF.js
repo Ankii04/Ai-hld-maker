@@ -1,8 +1,11 @@
-import html2pdf from 'html2pdf.js'
+// html2pdf.js (+ its bundled html2canvas/jsPDF deps) is only needed on the
+// rare PDF-export action, not on every editor page load — dynamic import
+// keeps it out of the main editor bundle entirely until it's actually used.
 
 export const exportTabAsPDF = async (elementId, filename) => {
   const element = document.getElementById(elementId)
   if (!element) return
+  const { default: html2pdf } = await import('html2pdf.js')
   const opt = {
     margin: 10,
     filename: `${filename}.pdf`,
@@ -14,6 +17,7 @@ export const exportTabAsPDF = async (elementId, filename) => {
 }
 
 export const exportFullDesignAsPDF = async (designTitle) => {
+  const { default: html2pdf } = await import('html2pdf.js')
   const tabs = [
     'hld-tab',
     'lld-tab',

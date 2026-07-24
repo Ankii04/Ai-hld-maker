@@ -7,6 +7,8 @@ const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
 
 const authRoutes = require('./routes/auth');
 const designRoutes = require('./routes/designs');
@@ -33,10 +35,13 @@ app.use(
       if (!origin) return callback(null, true);
 
       const cleanOrigin = origin.replace(/\/$/, '');
+      // Exact allowlist + localhost + this project's Vercel deployments only.
+      // (A bare /\.vercel\.app$/ wildcard would let ANY Vercel deployment call
+      // this API with credentials from a victim's browser.)
       const isAllowed =
         allowedOrigins.includes(cleanOrigin) ||
-        /https?:\/\/localhost(:\d+)?$/.test(cleanOrigin) ||
-        /\.vercel\.app$/.test(cleanOrigin);
+        /^https?:\/\/localhost(:\d+)?$/.test(cleanOrigin) ||
+        /^https:\/\/aihld(-[a-z0-9]+)*(-[a-z0-9-]+)?\.vercel\.app$/.test(cleanOrigin);
 
       if (isAllowed) {
         callback(null, true);
@@ -54,6 +59,30 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(mongoSanitize());
+
+// ─── Rate Limiting ────────────────────────────────────────────────────────────
+// Auth endpoints: guard against credential brute-forcing.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many attempts. Please try again in 15 minutes.' },
+});
+
+// AI generation endpoints: guard against Gemini quota/cost abuse.
+const generateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many generation requests. Please try again later.' },
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/signup', authLimiter);
+app.use(/^\/api\/designs\/[^/]+\/(generate|challenge)$/, generateLimiter);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 

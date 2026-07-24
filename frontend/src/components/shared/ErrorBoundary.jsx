@@ -59,8 +59,8 @@ export class ErrorBoundary extends Component {
               Something went wrong
             </h2>
             <p className="text-[#94a3b8] text-sm mb-8 leading-relaxed">
-              We encountered an unexpected error while trying to render this section. 
-              Our team has been notified.
+              We encountered an unexpected error while trying to render this section.
+              Try again, and if it keeps happening, refresh the page.
             </p>
             <button
               onClick={this.handleReset}

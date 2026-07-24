@@ -14,6 +14,7 @@
   --bg-secondary:   #12121a;
   --bg-tertiary:    #1a1a28;
   --border:         #2a2a3d;
+  --border-hover:   #3a3a55; /* base border +8% lightness — the standard hover treatment (no glow) */
   --accent-blue:    #3b82f6;
   --accent-purple:  #8b5cf6;
   --accent-cyan:    #06b6d4;
@@ -306,8 +307,7 @@
   }
 
   .card:hover {
-    border-color: rgba(59, 130, 246, 0.4);
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.35);
     transform: translateY(-2px);
   }
 
@@ -318,67 +318,96 @@
   }
 
   /* ============================================================
-     Button Base Styles
+     Button System — the ONE button grammar for app chrome.
+     Four intents × two sizes. No glow anywhere: hover is a
+     lighten + 1px lift; focus is a crisp ring. (Glow is reserved
+     exclusively for the AI-generating state, see .ai-glow.)
      ============================================================ */
-  .btn-primary {
+  .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    color: #ffffff;
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 600;
-    font-size: 0.9375rem;
+    gap: 6px;
+    padding: 9px 14px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
     border-radius: 8px;
-    transition: opacity var(--transition-fast),
-                box-shadow var(--transition-fast),
-                transform var(--transition-fast);
+    border: 1px solid transparent;
     cursor: pointer;
-    border: none;
-    outline: none;
-    text-decoration: none;
     white-space: nowrap;
+    text-decoration: none;
+    transition: background-color var(--transition-fast),
+                border-color var(--transition-fast),
+                color var(--transition-fast),
+                transform var(--transition-fast),
+                box-shadow var(--transition-fast);
   }
 
-  .btn-primary:hover {
-    opacity: 0.92;
-    box-shadow: var(--shadow-glow-blue);
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-sm {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .btn-primary {
+    color: #ffffff;
+    background: linear-gradient(180deg, #4a8ffc, #3b82f6);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(180deg, #5f9dff, #4a8ffc);
     transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   }
-
-  .btn-primary:active {
+  .btn-primary:active:not(:disabled) {
     transform: translateY(0);
-    opacity: 1;
   }
 
   .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
-    background: transparent;
     color: #f1f5f9;
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 500;
-    font-size: 0.9375rem;
-    border-radius: 8px;
-    border: 1px solid #2a2a3d;
-    transition: border-color var(--transition-fast),
-                background var(--transition-fast),
-                transform var(--transition-fast);
-    cursor: pointer;
-    outline: none;
-    text-decoration: none;
-    white-space: nowrap;
+    background: transparent;
+    border-color: var(--border);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    border-color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.06);
   }
 
-  .btn-secondary:hover {
-    border-color: rgba(59, 130, 246, 0.5);
-    background: rgba(59, 130, 246, 0.08);
-    transform: translateY(-1px);
+  .btn-ghost {
+    color: #94a3b8;
+    background: transparent;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    color: #f1f5f9;
+    background: var(--bg-tertiary);
+  }
+
+  .btn-danger {
+    color: #f87171;
+    background: transparent;
+    border-color: rgba(239, 68, 68, 0.35);
+  }
+  .btn-danger:hover:not(:disabled) {
+    color: #fca5a5;
+    border-color: var(--accent-red);
+    background: rgba(239, 68, 68, 0.10);
+  }
+
+  /* AI-generating state — the ONLY glow in the app */
+  .ai-glow {
+    animation: ai-pulse 2.4s ease-in-out infinite;
   }
 
   /* ============================================================
@@ -484,6 +513,17 @@
     opacity: 0.85;
     box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
   }
+}
+
+/* Purple pulse for the AI-generating state — the one sanctioned glow */
+@keyframes ai-pulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(139, 92, 246, 0.15); }
+  50%      { box-shadow: 0 0 30px rgba(139, 92, 246, 0.40); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-glow { animation: none; box-shadow: 0 0 14px rgba(139, 92, 246, 0.2); }
+  .animate-fade-in, .animate-slide-in-right, .animate-scale-in { animation: none; }
 }
 
 @keyframes float {
@@ -859,9 +899,13 @@
   display: block !important;
 }
 
-.react-flow__edges g,
-.xyflow__edges g {
-  pointer-events: none !important;
+/* NOTE: .react-flow__edges (the layer div) stays pointer-events:none above so
+   empty space doesn't block pane panning — but each individual edge group
+   needs pointer events restored, otherwise edges can never be clicked,
+   selected, or deleted anywhere in the app (HLD, LLD, DB, Canvas, Sandbox). */
+.react-flow__edge,
+.xyflow__edge {
+  pointer-events: visiblePainted;
 }
 
 .react-flow__edge-path,
@@ -953,3 +997,187 @@
 
 
 
+
+/* ============================================================
+   Landing Page — 3D & Motion Layer
+   (zero-dependency: pure CSS transforms; all animation is
+   transform/opacity only and disabled under reduced motion)
+   ============================================================ */
+
+/* Large CTA size for the hero — extends the .btn system */
+.btn-lg {
+  font-size: 15px;
+  padding: 12px 22px;
+  border-radius: 10px;
+}
+
+/* ── Aurora background blobs ── */
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(110px);
+  pointer-events: none;
+  will-change: transform;
+}
+.aurora-1 {
+  width: 560px; height: 560px;
+  background: radial-gradient(circle at 30% 30%, rgba(59,130,246,0.32), transparent 65%);
+  animation: aurora-drift-1 22s ease-in-out infinite alternate;
+}
+.aurora-2 {
+  width: 480px; height: 480px;
+  background: radial-gradient(circle at 70% 40%, rgba(139,92,246,0.28), transparent 65%);
+  animation: aurora-drift-2 26s ease-in-out infinite alternate;
+}
+.aurora-3 {
+  width: 380px; height: 380px;
+  background: radial-gradient(circle at 50% 60%, rgba(6,182,212,0.20), transparent 65%);
+  animation: aurora-drift-3 30s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift-1 {
+  from { transform: translate3d(-8%, -4%, 0) scale(1); }
+  to   { transform: translate3d(10%, 8%, 0) scale(1.15); }
+}
+@keyframes aurora-drift-2 {
+  from { transform: translate3d(6%, 10%, 0) scale(1.1); }
+  to   { transform: translate3d(-10%, -6%, 0) scale(0.95); }
+}
+@keyframes aurora-drift-3 {
+  from { transform: translate3d(0, 6%, 0) scale(0.95); }
+  to   { transform: translate3d(8%, -8%, 0) scale(1.1); }
+}
+
+/* ── Perspective grid floor ── */
+.grid-floor {
+  position: absolute;
+  left: 50%;
+  bottom: -12%;
+  width: 200%;
+  height: 55%;
+  transform: translateX(-50%) perspective(700px) rotateX(62deg);
+  transform-origin: center top;
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.14) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.9) 45%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.9) 45%, transparent 100%);
+  pointer-events: none;
+}
+
+/* ── 3D layered architecture stack (closing section) ──
+   Four tier plates floating at different Z depths, orbiting together
+   on an isometric axis. Reads as the product's own mental model:
+   clients on top, data at the bottom, traffic flowing between. */
+.stack3d-scene {
+  perspective: 1100px;
+  pointer-events: none;
+}
+.stack3d {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: stack-orbit 40s linear infinite;
+  /* promote to its own layer so the orbit stays smooth and sub-pixel
+     edges don't shimmer as the plates rotate */
+  will-change: transform;
+  backface-visibility: hidden;
+}
+@keyframes stack-orbit {
+  from { transform: rotateX(62deg) rotateZ(0deg); }
+  to   { transform: rotateX(62deg) rotateZ(360deg); }
+}
+
+.stack-plate {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1px solid;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.stack-node {
+  position: absolute;
+  border-radius: 5px;
+  border: 1px solid;
+  backface-visibility: hidden;
+}
+
+/* ── Hero tilt card ── */
+.tilt-scene {
+  perspective: 1400px;
+}
+.tilt-body {
+  transform-style: preserve-3d;
+  transition: transform 180ms ease-out;
+  will-change: transform;
+}
+.tilt-layer {
+  transform-style: preserve-3d;
+}
+
+/* Packet dots traveling along the preview card connectors */
+.packet-dot {
+  animation: packet-x 3.2s ease-in-out infinite;
+}
+@keyframes packet-x {
+  0%   { transform: translateX(0);      opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(100px); opacity: 0; }
+}
+.packet-dot-y {
+  animation: packet-y 2.6s ease-in-out infinite;
+}
+@keyframes packet-y {
+  0%   { transform: translateY(0);     opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(46px); opacity: 0; }
+}
+
+/* ── Bento feature cards: subtle 3D hover ── */
+.bento-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: transform 200ms ease, border-color 200ms ease, background-color 200ms ease;
+  transform-style: preserve-3d;
+}
+.bento-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-hover);
+  background: #14141f;
+}
+
+/* ── Scroll reveal (used with IntersectionObserver) ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+.reveal.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Reduced motion: everything settles into a static composition ── */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob, .stack3d, .packet-dot, .packet-dot-y {
+    animation: none !important;
+  }
+  .tilt-body {
+    transition: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

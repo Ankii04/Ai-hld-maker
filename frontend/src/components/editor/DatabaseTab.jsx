@@ -15,6 +15,7 @@ import '@xyflow/react/dist/style.css'
 import { Database, HardDrive, Layers, GitBranch, Download } from 'lucide-react'
 import { generateSQLSchema } from '../../utils/exportPDF'
 import dagre from 'dagre'
+import { TabHeader, Panel, PanelHeader, TabShell, TabEmpty } from './Section'
 
 /* ─── ER Table Node ─────────────────────────────────────────────────────── */
 function TableNode({ data, selected }) {
@@ -47,17 +48,17 @@ function TableNode({ data, selected }) {
           <div key={i} className="flex items-center justify-between gap-2 px-3 py-1.5">
             <div className="flex items-center gap-1.5 min-w-0">
               {col.isPrimary && (
-                <span className="text-[8px] font-bold text-[#fbbf24] leading-none">PK</span>
+                <span className="text-[11px] font-bold text-[#fbbf24] leading-none">PK</span>
               )}
               {col.isForeign && (
-                <span className="text-[8px] font-bold text-[#60a5fa] leading-none">FK</span>
+                <span className="text-[11px] font-bold text-[#60a5fa] leading-none">FK</span>
               )}
-              <span className="text-[#e2e8f0] text-[11px] font-mono truncate">{col.name}</span>
+              <span className="text-[#e2e8f0] text-[12px] font-mono truncate">{col.name}</span>
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              <span className="text-[10px] text-[#94a3b8] font-mono">{col.type}</span>
+              <span className="text-[11px] text-[#94a3b8] font-mono">{col.type}</span>
               {col.constraints?.includes('NOT NULL') && (
-                <span className="text-[8px] text-[#f87171]">NN</span>
+                <span className="text-[11px] text-[#f87171]">NN</span>
               )}
             </div>
           </div>
@@ -142,18 +143,10 @@ function buildERGraph(tables = []) {
 /* ─── Info Card ─────────────────────────────────────────────────────────── */
 function InfoCard({ icon: Icon, iconColor, title, children }) {
   return (
-    <div className="bg-[#12121a] border border-[#2a2a3d] rounded-xl p-4">
-      <div className="flex items-center gap-2.5 mb-2">
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: `${iconColor}20` }}
-        >
-          <Icon size={13} style={{ color: iconColor }} />
-        </div>
-        <h4 className="text-sm font-semibold text-[#f1f5f9]">{title}</h4>
-      </div>
+    <Panel className="flex flex-col gap-3">
+      <PanelHeader icon={Icon} tone={iconColor} title={title} />
       {children}
-    </div>
+    </Panel>
   )
 }
 
@@ -185,37 +178,37 @@ export default function DatabaseTab({ design }) {
 
   if (!design) {
     return (
-      <div className="flex items-center justify-center h-64 text-[#4a4a6a] text-sm p-6">
-        Generate a design to see database schema
-      </div>
+      <TabEmpty
+        icon={Database}
+        title="No database schema yet"
+        description="Generate a design to see database schema."
+      />
     )
   }
 
   return (
-    <div id="database-tab" className="flex flex-col gap-6 p-6">
+    <TabShell id="database-tab">
       {/* Header row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-base font-bold text-[#f1f5f9]">Database Schema & DDL</h2>
-          <p className="text-xs text-[#94a3b8] mt-0.5">
-            {tables.length} tables defined for {db.type || 'PostgreSQL'}
-          </p>
-        </div>
-        <button
-          onClick={handleDownloadSQL}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-[#1a1a28] border border-[#2a2a3d] text-[#94a3b8] hover:border-[#16a34a]/60 hover:text-[#4ade80] hover:bg-[#16a34a]/10 transition-all duration-200"
-        >
-          <Download size={14} />
-          Download SQL DDL
-        </button>
-      </div>
+      <TabHeader
+        title="Database Schema & DDL"
+        description={`${tables.length} tables defined for ${db.type || 'PostgreSQL'}`}
+        actions={
+          <button
+            onClick={handleDownloadSQL}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-[#1a1a28] border border-[#2a2a3d] text-[#94a3b8] hover:border-[#16a34a]/60 hover:text-[#4ade80] hover:bg-[#16a34a]/10 transition-all duration-200"
+          >
+            <Download size={14} />
+            Download SQL DDL
+          </button>
+        }
+      />
       {/* ER Diagram */}
       <div
-        className="rounded-2xl overflow-hidden border border-[#2a2a3d] bg-[#0a0a0f] relative"
+        className="rounded-xl overflow-hidden border border-[#2a2a3d] bg-[#0a0a0f] relative"
         style={{ height: 480 }}
       >
         <div className="absolute top-3 left-3 z-10">
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#16a34a]/20 text-[#4ade80] border border-[#16a34a]/30">
+          <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.08em] bg-[#16a34a]/20 text-[#4ade80] border border-[#16a34a]/30">
             Entity Relationship Diagram
           </span>
         </div>
@@ -248,14 +241,14 @@ export default function DatabaseTab({ design }) {
             />
           </ReactFlow>
         ) : (
-          <div className="flex items-center justify-center h-full text-[#4a4a6a] text-sm">
+          <div className="flex items-center justify-center h-full text-[#94a3b8] text-sm">
             No table definitions available
           </div>
         )}
       </div>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <InfoCard icon={Database} iconColor="#4ade80" title="Database">
           <p className="text-sm text-[#94a3b8] leading-relaxed">
             <span className="text-[#f1f5f9] font-medium">{db.type || 'PostgreSQL'}</span>
@@ -290,22 +283,16 @@ export default function DatabaseTab({ design }) {
 
       {/* Database Scaling Strategy */}
       {db.scalingStrategy && (
-        <div className="bg-[#12121a] border border-[#2a2a3d] rounded-xl p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Layers size={15} className="text-[#ec4899]" />
-            <h3 className="text-sm font-semibold text-[#f1f5f9]">Replication & Scaling Strategy</h3>
-          </div>
+        <Panel className="flex flex-col gap-3">
+          <PanelHeader icon={Layers} tone="#ec4899" title="Replication & Scaling Strategy" />
           <p className="text-xs text-[#94a3b8] leading-relaxed">{db.scalingStrategy}</p>
-        </div>
+        </Panel>
       )}
 
       {/* Indexing Recommendations */}
       {db.indexingRecommendations?.length > 0 && (
-        <div className="bg-[#12121a] border border-[#2a2a3d] rounded-xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <GitBranch size={15} className="text-[#06b6d4]" />
-            <h3 className="text-sm font-semibold text-[#f1f5f9]">Indexing Recommendations</h3>
-          </div>
+        <Panel className="flex flex-col gap-4">
+          <PanelHeader icon={GitBranch} tone="#06b6d4" title="Indexing Recommendations" />
           <div className="space-y-2">
             {db.indexingRecommendations.map((rec, i) => (
               <div
@@ -313,7 +300,7 @@ export default function DatabaseTab({ design }) {
                 className="flex items-start gap-3 bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-4 py-3"
               >
                 <div className="w-5 h-5 rounded-full bg-[#06b6d4]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-[9px] font-bold text-[#06b6d4]">{i + 1}</span>
+                  <span className="text-[11px] font-bold text-[#06b6d4]">{i + 1}</span>
                 </div>
                 <p className="text-sm text-[#94a3b8] leading-relaxed">
                   <code className="text-[#e2e8f0] font-mono">{rec}</code>
@@ -321,8 +308,8 @@ export default function DatabaseTab({ design }) {
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
       )}
-    </div>
+    </TabShell>
   )
 }

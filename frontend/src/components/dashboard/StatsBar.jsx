@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { LayoutDashboard, Calendar, Code2, Crown } from 'lucide-react'
 
 /* ─── Individual stat card ───────────────────────────────────────────────── */
@@ -14,7 +15,7 @@ function StatCard({ icon: Icon, iconColor, label, value, sub, accentBg }) {
       <div className="min-w-0">
         <p className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider">{label}</p>
         <p className="text-xl font-bold text-[#f1f5f9] leading-none mt-0.5 truncate">{value}</p>
-        {sub && <p className="text-[10px] text-[#4a4a6a] mt-0.5 truncate">{sub}</p>}
+        {sub && <p className="text-[11px] text-[#94a3b8] mt-0.5 truncate">{sub}</p>}
       </div>
     </div>
   )
@@ -92,15 +93,15 @@ export default function StatsBar({ designs = [], user }) {
             {isPro ? 'Pro' : 'Free'}
           </p>
           {!isPro && (
-            <a
-              href="/upgrade"
-              className="text-[10px] text-[#8b5cf6] hover:text-[#a855f7] transition-colors mt-0.5 block"
+            <Link
+              to="/upgrade"
+              className="text-xs text-[#8b5cf6] hover:text-[#a855f7] transition-colors mt-0.5 block"
             >
               Upgrade to Pro →
-            </a>
+            </Link>
           )}
           {isPro && (
-            <p className="text-[10px] text-[#4a4a6a] mt-0.5">All features unlocked</p>
+            <p className="text-[11px] text-[#94a3b8] mt-0.5">All features unlocked</p>
           )}
         </div>
       </div>

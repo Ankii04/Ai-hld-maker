@@ -81,8 +81,8 @@ function SandboxNodeShell({
     >
       {/* Floating Walkthrough Tooltip */}
       {telemetry.walkthroughMessage && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 w-44 bg-gradient-to-r from-blue-600 to-purple-600 border border-blue-400 text-white rounded-lg p-2 text-[9px] leading-normal shadow-2xl z-[999] text-center animate-bounce">
-          <div className="font-bold uppercase tracking-wider mb-0.5 text-[7px] text-blue-200">Active Action</div>
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 w-52 bg-gradient-to-r from-blue-600 to-purple-600 border border-blue-400 text-white rounded-lg p-2 text-[11px] leading-normal shadow-2xl z-[999] text-center animate-bounce">
+          <div className="font-semibold uppercase tracking-wider mb-0.5 text-[10px] text-blue-200">Active Action</div>
           {telemetry.walkthroughMessage}
           <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-purple-600" />
         </div>
@@ -108,7 +108,7 @@ function SandboxNodeShell({
           </span>
         </div>
         {activeInstances > 1 && !isOffline && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold font-mono">
+          <span className="text-[11px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold font-mono">
             x{activeInstances}
           </span>
         )}
@@ -117,8 +117,8 @@ function SandboxNodeShell({
       {/* Body / Telemetry statistics */}
       <div className="p-3 space-y-2">
         {/* Status Indicator */}
-        <div className="flex items-center justify-between text-[9px] uppercase tracking-wider">
-          <span className="text-[#4a4a6a] font-bold">Status</span>
+        <div className="flex items-center justify-between text-[11px] uppercase tracking-wider">
+          <span className="text-[#94a3b8] font-bold">Status</span>
           <span className={`font-semibold font-mono ${statusColor} flex items-center gap-1`}>
             {isOffline ? (
               <XCircle size={10} className="text-red-500" />
@@ -135,8 +135,8 @@ function SandboxNodeShell({
 
         {/* Utilization Slider/Progress Bar */}
         <div className="space-y-1">
-          <div className="flex items-center justify-between text-[9px]">
-            <span className="text-[#4a4a6a] font-bold uppercase">Resource Load</span>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-[#94a3b8] font-bold uppercase">Resource Load</span>
             <span className="text-[#94a3b8] font-bold font-mono">{Math.round(utilization)}%</span>
           </div>
           <div className="w-full h-1.5 rounded-full bg-[#161622] overflow-hidden border border-[#2a2a3d]/30">
@@ -150,13 +150,13 @@ function SandboxNodeShell({
         {/* Metrics Grid */}
         <div className="grid grid-cols-2 gap-2 pt-1 border-t border-[#2a2a3d]/30">
           <div>
-            <span className="block text-[8px] text-[#4a4a6a] font-bold uppercase">Latency</span>
+            <span className="block text-[10px] text-[#94a3b8] font-bold uppercase">Latency</span>
             <span className="text-[10px] text-[#e2e8f0] font-semibold font-mono">
               {isOffline ? '-' : latency >= 1000 ? `${(latency / 1000).toFixed(2)}s` : `${Math.round(latency)}ms`}
             </span>
           </div>
           <div>
-            <span className="block text-[8px] text-[#4a4a6a] font-bold uppercase">Error Rate</span>
+            <span className="block text-[10px] text-[#94a3b8] font-bold uppercase">Error Rate</span>
             <span className={`text-[10px] font-semibold font-mono ${(errorRate > 0 && !isOffline) ? 'text-red-400' : 'text-[#e2e8f0]'}`}>
               {isOffline ? '-' : `${(errorRate * 100).toFixed(1)}%`}
             </span>
@@ -166,7 +166,7 @@ function SandboxNodeShell({
         {/* Technology Tag */}
         {technology && (
           <div className="pt-1.5 flex justify-end">
-            <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-[#1a1a2c]/50 text-[#94a3b8] border border-[#2a2a3d]/60 font-mono">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#1a1a2c]/50 text-[#94a3b8] border border-[#2a2a3d]/60 font-mono">
               {technology}
             </span>
           </div>

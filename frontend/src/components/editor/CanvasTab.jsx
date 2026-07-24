@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import {
   ReactFlow,
   Background,
@@ -15,43 +15,69 @@ import CanvasToolbar from '../diagram/CanvasToolbar'
 import ContextMenu from '../diagram/ContextMenu'
 import CanvasProperties from '../diagram/CanvasProperties'
 import IconSearchPanel from '../diagram/IconSearchPanel'
-import { Undo, Redo } from 'lucide-react'
+import useDesignStore from '../../store/designStore'
+import { Undo, Redo, Check, Loader2 } from 'lucide-react'
 
+/**
+ * Ref-backed undo/redo history. Deliberately avoids splitting the stack
+ * pointer and the stack array across two separate useState calls — doing so
+ * let the pointer and array desync once the 50-entry cap kicked in (trimming
+ * the front of the array without adjusting the pointer). Everything here
+ * lives on one ref and a cheap re-render trigger.
+ */
 function useHistory(initialNodes, initialEdges) {
-  const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges }])
-  const [pointer, setPointer] = useState(0)
+  const ref = useRef({ stack: [{ nodes: initialNodes, edges: initialEdges }], pointer: 0 })
+  const [, bump] = useState(0)
 
   const pushState = useCallback((nodes, edges) => {
-    setHistory((prev) => {
-      const next = prev.slice(0, pointer + 1)
-      next.push({ nodes, edges })
-      if (next.length > 50) next.shift()
-      return next
-    })
-    setPointer((prev) => Math.min(prev + 1, 49))
-  }, [pointer])
+    const h = ref.current
+    const truncated = h.stack.slice(0, h.pointer + 1)
+    truncated.push({ nodes, edges })
+    const overflow = truncated.length - 50
+    h.stack = overflow > 0 ? truncated.slice(overflow) : truncated
+    h.pointer = h.stack.length - 1
+    bump((x) => x + 1)
+  }, [])
 
   const undo = useCallback(() => {
-    if (pointer > 0) setPointer(pointer - 1)
-  }, [pointer])
+    const h = ref.current
+    if (h.pointer > 0) {
+      h.pointer -= 1
+      bump((x) => x + 1)
+    }
+  }, [])
 
   const redo = useCallback(() => {
-    if (pointer < history.length - 1) setPointer(pointer + 1)
-  }, [pointer, history.length])
+    const h = ref.current
+    if (h.pointer < h.stack.length - 1) {
+      h.pointer += 1
+      bump((x) => x + 1)
+    }
+  }, [])
 
+  const h = ref.current
   return {
-    state: history[pointer] || { nodes: [], edges: [] },
+    state: h.stack[h.pointer] || { nodes: [], edges: [] },
     pushState,
     undo,
     redo,
-    canUndo: pointer > 0,
-    canRedo: pointer < history.length - 1,
+    canUndo: h.pointer > 0,
+    canRedo: h.pointer < h.stack.length - 1,
   }
 }
 
+const isTypingTarget = (el) =>
+  !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
+
 export default function CanvasTab({ design }) {
-  const { state, pushState, undo, redo, canUndo, canRedo } = useHistory([], [])
-  
+  const designId = design?._id || design?.id
+  const savedCanvas = design?.canvas
+
+  const { state, pushState, undo, redo, canUndo, canRedo } = useHistory(
+    savedCanvas?.nodes || [],
+    savedCanvas?.edges || []
+  )
+
   const [nodes, setNodes, onNodesChangeCore] = useNodesState(state.nodes)
   const [edges, setEdges, onEdgesChangeCore] = useEdgesState(state.edges)
   const [reactFlowInstance, setReactFlowInstance] = useState(null)
@@ -59,6 +85,7 @@ export default function CanvasTab({ design }) {
   const [selectedNodeId, setSelectedNodeId] = useState(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState(null)
   const [showIconSearch, setShowIconSearch] = useState(false)
+  const [saveState, setSaveState] = useState(savedCanvas ? 'saved' : 'idle') // idle | saving | saved
   const reactFlowWrapper = useRef(null)
 
   useEffect(() => {
@@ -170,15 +197,115 @@ export default function CanvasTab({ design }) {
   const onSelectionChange = useCallback(({ nodes: selNodes, edges: selEdges }) => {
     if (selNodes.length === 1) setSelectedNodeId(selNodes[0].id)
     else setSelectedNodeId(null)
-    
+
     if (selEdges.length === 1) setSelectedEdgeId(selEdges[0].id)
     else setSelectedEdgeId(null)
   }, [])
 
+  /* ── Delete whatever is currently selected (multi-select aware) ────────── */
+  const deleteSelected = useCallback(() => {
+    setNodes((nds) => {
+      const hadSelection = nds.some((n) => n.selected)
+      const nextNds = nds.filter((n) => !n.selected)
+      setEdges((eds) => {
+        const nextEds = eds.filter((e) => !e.selected)
+        if (hadSelection || eds.some((e) => e.selected)) {
+          pushState(nextNds, nextEds)
+        }
+        return nextEds
+      })
+      return nextNds
+    })
+  }, [pushState, setNodes, setEdges])
+
+  /* ── Duplicate whatever is currently selected ───────────────────────────── */
+  const duplicateSelected = useCallback(() => {
+    setNodes((nds) => {
+      const selected = nds.filter((n) => n.selected)
+      if (selected.length === 0) return nds
+      const clones = selected.map((n) => ({
+        ...n,
+        id: `canvas_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        position: { x: n.position.x + 30, y: n.position.y + 30 },
+        selected: true,
+      }))
+      const nextNds = nds.map((n) => ({ ...n, selected: false })).concat(clones)
+      pushState(nextNds, edges)
+      return nextNds
+    })
+  }, [edges, pushState, setNodes])
+
+  /* ── Keyboard shortcuts: Delete, Ctrl+Z/Y, Ctrl+D, Escape ───────────────── */
+  useEffect(() => {
+    const handler = (e) => {
+      if (isTypingTarget(document.activeElement)) return
+      const mod = e.ctrlKey || e.metaKey
+
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !mod) {
+        e.preventDefault()
+        deleteSelected()
+      } else if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+      } else if (mod && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) {
+        e.preventDefault()
+        redo()
+      } else if (mod && e.key.toLowerCase() === 'd') {
+        e.preventDefault()
+        duplicateSelected()
+      } else if (e.key === 'Escape') {
+        setMenu(null)
+        setShowIconSearch(false)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [deleteSelected, undo, redo, duplicateSelected])
+
+  /* ── Persistence: debounced autosave + flush-on-unmount (tab switch) ────
+   * The Canvas tab component is unmounted whenever the user switches to a
+   * different editor tab (Editor.jsx only renders the active tab). Without
+   * this, every shape/edge drawn here was silently lost the moment you left
+   * the tab. We now save to the design document on every change (debounced)
+   * and flush immediately when the tab unmounts, so work always survives. */
+  const latestRef = useRef({ nodes, edges })
+  useEffect(() => {
+    latestRef.current = { nodes, edges }
+  }, [nodes, edges])
+
+  useEffect(() => {
+    if (!designId) return
+    setSaveState('saving')
+    const timeout = setTimeout(() => {
+      useDesignStore.getState().saveCanvas(designId, { nodes, edges }).then((res) => {
+        setSaveState(res.success ? 'saved' : 'idle')
+      })
+    }, 800)
+    return () => clearTimeout(timeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, designId])
+
+  useEffect(() => {
+    return () => {
+      if (designId) {
+        useDesignStore.getState().saveCanvas(designId, latestRef.current)
+      }
+    }
+  }, [designId])
+
+  /* ── Inject a rename callback into node data (label editing) ────────────── */
+  const nodesWithHandlers = useMemo(
+    () => nodes.map((n) => ({
+      ...n,
+      data: { ...n.data, onRename: (label) => onUpdateNode(n.id, { label }) },
+    })),
+    [nodes, onUpdateNode]
+  )
+
   return (
     <div id="canvas-tab" className="flex flex-col h-[700px] w-full bg-[#0a0a0f] relative" ref={reactFlowWrapper}>
       <ReactFlow
-        nodes={nodes}
+        nodes={nodesWithHandlers}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
@@ -193,6 +320,7 @@ export default function CanvasTab({ design }) {
           setShowIconSearch(false)
         }}
         nodeTypes={CanvasNodes}
+        deleteKeyCode={null}
         snapToGrid={true}
         snapGrid={[20, 20]}
         fitView
@@ -200,30 +328,44 @@ export default function CanvasTab({ design }) {
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#2a2a3d" />
         <Controls showInteractive={false} className="bg-[#12121a] border border-[#2a2a3d]" />
-        
-        {/* Undo/Redo at top-right */}
+
+        {/* Undo/Redo + save status at top-right */}
         <Panel position="top-right" className="bg-[#12121a] border border-[#2a2a3d] p-1.5 rounded-xl shadow-xl flex gap-1 items-center mt-2 mr-2">
-          <button onClick={undo} disabled={!canUndo} className="p-2 text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-30 transition-colors">
+          <button onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)" className="p-2 text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-30 transition-colors">
             <Undo size={16} />
           </button>
-          <button onClick={redo} disabled={!canRedo} className="p-2 text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-30 transition-colors">
+          <button onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)" className="p-2 text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-30 transition-colors">
             <Redo size={16} />
           </button>
+          <div className="w-px h-5 bg-[#2a2a3d] mx-1" />
+          <div className="flex items-center gap-1 px-1 text-[11px] font-medium text-[#94a3b8]" title="Autosaves 800ms after your last change">
+            {saveState === 'saving' ? (
+              <>
+                <Loader2 size={11} className="animate-spin" />
+                Saving…
+              </>
+            ) : saveState === 'saved' ? (
+              <>
+                <Check size={11} className="text-green-400" />
+                Saved
+              </>
+            ) : null}
+          </div>
         </Panel>
 
         {/* Vertical Toolbar at left-center */}
         <Panel position="top-left" className="mt-4 ml-2">
-          <CanvasToolbar 
+          <CanvasToolbar
             onAddNode={(type) => {
               const pos = reactFlowInstance?.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }) || { x: 100, y: 100 }
               handleAddNode(type, pos)
-            }} 
+            }}
             onToggleSearch={() => setShowIconSearch(prev => !prev)}
           />
         </Panel>
 
         {showIconSearch && (
-          <IconSearchPanel 
+          <IconSearchPanel
             onClose={() => setShowIconSearch(false)}
             onSelect={(iconProps) => {
               const pos = reactFlowInstance?.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }) || { x: 100, y: 100 }

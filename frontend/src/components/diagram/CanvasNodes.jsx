@@ -1,16 +1,84 @@
-import { memo } from 'react'
+import { memo, useState, useRef, useEffect } from 'react'
 import { Handle, Position, NodeResizer } from '@xyflow/react'
-import * as SiIcons from 'react-icons/si'
+import { loadIconSet } from '../../utils/iconLoader'
+
+function useIconComponent(iconName) {
+  const [Icon, setIcon] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    loadIconSet().then((mod) => {
+      if (!cancelled) setIcon(() => mod[iconName] || null)
+    })
+    return () => { cancelled = true }
+  }, [iconName])
+
+  return Icon
+}
+
+/** Shared double-click-to-rename label, used by both shape and icon nodes. */
+function EditableLabel({ label, onRename, className, style, placeholder = 'Label' }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(label)
+  const inputRef = useRef(null)
+
+  useEffect(() => setDraft(label), [label])
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }
+  }, [editing])
+
+  const commit = () => {
+    setEditing(false)
+    const trimmed = draft.trim()
+    if (trimmed && trimmed !== label) onRename?.(trimmed)
+    else setDraft(label)
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit()
+          if (e.key === 'Escape') { setDraft(label); setEditing(false) }
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => e.stopPropagation()}
+        placeholder={placeholder}
+        className={`bg-black/40 outline-none border-b border-blue-400 text-center ${className}`}
+        style={style}
+      />
+    )
+  }
+
+  return (
+    <div
+      onDoubleClick={(e) => { e.stopPropagation(); setEditing(true) }}
+      className={className}
+      style={style}
+    >
+      {label || placeholder}
+    </div>
+  )
+}
 
 const ResizableShapeNode = memo(({ data, selected }) => {
-  const { 
-    shape = 'rectangle', 
-    color = '#1e293b', 
+  const {
+    shape = 'rectangle',
+    color = '#1e293b',
     strokeColor = 'rgba(255, 255, 255, 0.2)',
     borderStyle = 'solid',
     borderWidth = 2,
     label = 'Node',
-    fontSize = 12
+    fontSize = 12,
+    onRename,
   } = data
 
   const borderCss = `${borderWidth}px ${borderStyle} ${strokeColor}`
@@ -20,12 +88,12 @@ const ResizableShapeNode = memo(({ data, selected }) => {
     switch (shape) {
       case 'circle':
         return (
-          <div
+          <EditableLabel
+            label={label}
+            onRename={onRename}
             className="w-full h-full rounded-full flex items-center justify-center font-medium break-words p-2 text-center"
             style={{ backgroundColor: color, border: borderCss, fontSize, color: textColor }}
-          >
-            {label}
-          </div>
+          />
         )
       case 'diamond':
         return (
@@ -40,31 +108,30 @@ const ResizableShapeNode = memo(({ data, selected }) => {
                 color: textColor
               }}
             >
-              <div style={{ transform: 'rotate(-45deg)' }}>{label}</div>
+              <div style={{ transform: 'rotate(-45deg)' }}>
+                <EditableLabel label={label} onRename={onRename} className="text-center" style={{ color: textColor }} />
+              </div>
             </div>
           </div>
         )
       case 'text':
         return (
-          <div
+          <EditableLabel
+            label={label}
+            onRename={onRename}
             className="w-full h-full flex items-center justify-center font-medium break-words p-2"
-            style={{ 
-              fontSize, 
-              color: strokeColor === 'rgba(255, 255, 255, 0.2)' ? textColor : strokeColor 
-            }}
-          >
-            {label}
-          </div>
+            style={{ fontSize, color: strokeColor === 'rgba(255, 255, 255, 0.2)' ? textColor : strokeColor }}
+          />
         )
       case 'rectangle':
       default:
         return (
-          <div
+          <EditableLabel
+            label={label}
+            onRename={onRename}
             className="w-full h-full rounded-lg flex items-center justify-center font-medium break-words p-2 text-center"
             style={{ backgroundColor: color, border: borderCss, fontSize, color: textColor }}
-          >
-            {label}
-          </div>
+          />
         )
     }
   }
@@ -82,8 +149,8 @@ const ResizableShapeNode = memo(({ data, selected }) => {
 })
 
 const IconNode = memo(({ data, selected }) => {
-  const { iconName, color = '#f1f5f9', label = '' } = data
-  const IconComponent = SiIcons[iconName]
+  const { iconName, color = '#f1f5f9', label = '', onRename } = data
+  const IconComponent = useIconComponent(iconName)
 
   return (
     <>
@@ -93,15 +160,17 @@ const IconNode = memo(({ data, selected }) => {
         {IconComponent ? (
           <IconComponent className="w-full h-full" style={{ color }} />
         ) : (
-          <div className="w-full h-full bg-[#1e293b] rounded-lg border border-red-500/50 flex items-center justify-center text-[10px] text-red-400">
+          <div className="w-full h-full bg-[#1e293b] rounded-lg border border-red-500/50 flex items-center justify-center text-[11px] text-red-400">
             ?
           </div>
         )}
-        {label && (
-          <span className="absolute -bottom-5 text-[10px] whitespace-nowrap text-[#94a3b8]" style={{ color }}>
-            {label}
-          </span>
-        )}
+        <EditableLabel
+          label={label}
+          onRename={onRename}
+          placeholder="Label"
+          className="absolute -bottom-5 text-[11px] whitespace-nowrap"
+          style={{ color }}
+        />
       </div>
       <Handle type="source" position={Position.Bottom} className="w-2 h-2 !bg-blue-400 opacity-0 group-hover:opacity-100" />
       <Handle type="source" position={Position.Left} id="left" className="w-2 h-2 !bg-blue-400 opacity-0 group-hover:opacity-100" />

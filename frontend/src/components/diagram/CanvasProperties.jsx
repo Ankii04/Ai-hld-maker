@@ -55,7 +55,7 @@ const CanvasProperties = ({
                 key={c}
                 onClick={() => handleColorChange(c)}
                 className="w-6 h-6 rounded border hover:scale-110 transition-transform"
-                style={{ backgroundColor: c, borderColor: c === 'transparent' ? '#4a4a6a' : c, borderStyle: c === 'transparent' ? 'dashed' : 'solid' }}
+                style={{ backgroundColor: c, borderColor: c === 'transparent' ? '#3a3a55' : c, borderStyle: c === 'transparent' ? 'dashed' : 'solid' }}
               />
             ))}
           </div>
@@ -70,7 +70,7 @@ const CanvasProperties = ({
               key={c}
               onClick={() => handleStrokeChange(c)}
               className="w-6 h-6 rounded border hover:scale-110 transition-transform"
-              style={{ backgroundColor: c === 'rgba(255, 255, 255, 0.2)' ? '#2a2a3d' : c, borderColor: c === 'transparent' ? '#4a4a6a' : '#2a2a3d', borderStyle: c === 'transparent' ? 'dashed' : 'solid' }}
+              style={{ backgroundColor: c === 'rgba(255, 255, 255, 0.2)' ? '#2a2a3d' : c, borderColor: c === 'transparent' ? '#3a3a55' : '#2a2a3d', borderStyle: c === 'transparent' ? 'dashed' : 'solid' }}
             />
           ))}
         </div>

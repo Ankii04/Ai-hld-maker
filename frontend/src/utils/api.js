@@ -56,6 +56,19 @@ api.interceptors.response.use(
       error.message ||
       'Something went wrong'
 
+    // Session expired/invalid — clear it and bounce to login rather than
+    // letting every subsequent request fail silently with a toast storm.
+    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
+      try {
+        localStorage.removeItem('archmind-auth')
+      } catch {
+        // ignore
+      }
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login'
+      }
+    }
+
     return Promise.reject({
       message,
       data: error.response?.data ?? null,

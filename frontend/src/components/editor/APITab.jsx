@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Lock, Copy, ChevronDown, ChevronRight, Check } from 'lucide-react'
+import { Lock, Copy, ChevronDown, ChevronRight, Check, Network } from 'lucide-react'
+import { Overline, TabHeader, Panel, TabShell, TabEmpty } from './Section'
 
 const METHOD_STYLES = {
   GET:    { bg: '#14532d', text: '#4ade80', border: '#16a34a' },
@@ -58,11 +59,11 @@ function EndpointItem({ endpoint }) {
         {endpoint.auth && (
           <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#422006] border border-[#d97706]/30" title="Auth required">
             <Lock size={10} className="text-[#fbbf24]" />
-            <span className="text-[9px] text-[#fbbf24] font-bold">AUTH</span>
+            <span className="text-[11px] text-[#fbbf24] font-bold">AUTH</span>
           </div>
         )}
         <CopyButton text={copyText} />
-        <span className="text-[#4a4a6a] flex-shrink-0">
+        <span className="text-[#64748b] flex-shrink-0">
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         </span>
       </div>
@@ -79,9 +80,7 @@ function EndpointItem({ endpoint }) {
         <div className="border-t border-[#2a2a3d] grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-[#2a2a3d]">
           {/* Request Body */}
           <div className="p-4">
-            <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider mb-2">
-              Request Body
-            </p>
+            <Overline className="block mb-2">Request Body</Overline>
             <pre
               className="text-xs text-[#e2e8f0] font-mono overflow-auto rounded-lg p-3 leading-relaxed"
               style={{ background: '#0d1117', maxHeight: 200 }}
@@ -94,9 +93,7 @@ function EndpointItem({ endpoint }) {
 
           {/* Response */}
           <div className="p-4">
-            <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider mb-2">
-              Response
-            </p>
+            <Overline className="block mb-2">Response</Overline>
             <pre
               className="text-xs text-[#e2e8f0] font-mono overflow-auto rounded-lg p-3 leading-relaxed"
               style={{ background: '#0d1117', maxHeight: 200 }}
@@ -116,19 +113,19 @@ function ServiceAccordion({ service }) {
   const [open, setOpen] = useState(true)
 
   return (
-    <div className="border border-[#2a2a3d] rounded-2xl overflow-hidden">
+    <Panel padded={false} className="overflow-hidden">
       {/* Group header */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-5 py-4 bg-[#12121a] hover:bg-[#1a1a28] transition-colors"
       >
         <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-[#f1f5f9]">{service.name}</span>
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#3b82f6]/15 text-[#3b82f6] border border-[#3b82f6]/25">
-            {service.endpoints?.length || 0} endpoints
+          <span className="font-heading text-[14px] font-semibold text-[#f1f5f9]">{service.name}</span>
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#3b82f6]/15 text-[#3b82f6] border border-[#3b82f6]/25">
+            {service.endpoints?.length || 0} endpoint{service.endpoints?.length === 1 ? '' : 's'}
           </span>
           {service.technology && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#1a1a28] text-[#94a3b8] border border-[#2a2a3d]">
+            <span className="px-2 py-0.5 rounded-full text-[11px] bg-[#1a1a28] text-[#94a3b8] border border-[#2a2a3d]">
               {service.technology}
             </span>
           )}
@@ -137,16 +134,16 @@ function ServiceAccordion({ service }) {
       </button>
 
       {open && (
-        <div className="bg-[#0d0d18] p-4 space-y-2">
+        <div className="bg-[#0d0d18] p-4 flex flex-col gap-3">
           {service.endpoints?.map((ep, i) => (
             <EndpointItem key={i} endpoint={ep} />
           ))}
           {(!service.endpoints || service.endpoints.length === 0) && (
-            <p className="text-sm text-[#4a4a6a] py-2 px-2">No endpoints defined</p>
+            <p className="text-[13px] text-[#94a3b8] py-2 px-2">No endpoints defined</p>
           )}
         </div>
       )}
-    </div>
+    </Panel>
   )
 }
 
@@ -156,36 +153,32 @@ export default function APITab({ design }) {
 
   if (!design) {
     return (
-      <div className="flex items-center justify-center h-64 text-[#4a4a6a] text-sm p-6">
-        Generate a design to see API contracts
-      </div>
+      <TabEmpty
+        icon={Network}
+        title="No API contracts yet"
+        description="Generate a design to see API contracts"
+      />
     )
   }
 
   return (
-    <div id="api-tab" className="flex flex-col gap-5 p-6">
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-bold text-[#f1f5f9]">API Contracts</h2>
-          <p className="text-xs text-[#94a3b8] mt-0.5">
-            {services.reduce((acc, s) => acc + (s.endpoints?.length || 0), 0)} total endpoints
-            across {services.length} services
-          </p>
-        </div>
-      </div>
+    <TabShell id="api-tab">
+      <TabHeader
+        title="API Contracts"
+        description={`${services.reduce((acc, s) => acc + (s.endpoints?.length || 0), 0)} total endpoints across ${services.length} services`}
+      />
 
       {/* Service accordions */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {services.map((svc) => (
           <ServiceAccordion key={svc.name} service={svc} />
         ))}
         {services.length === 0 && (
-          <div className="flex items-center justify-center h-32 text-[#4a4a6a] text-sm border border-[#2a2a3d] rounded-xl">
+          <div className="flex items-center justify-center h-32 text-[#94a3b8] text-[13px] border border-[#2a2a3d] rounded-xl">
             No services defined
           </div>
         )}
       </div>
-    </div>
+    </TabShell>
   )
 }

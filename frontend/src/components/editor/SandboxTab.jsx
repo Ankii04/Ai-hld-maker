@@ -39,13 +39,20 @@ import {
 } from 'lucide-react'
 
 // Default capacities and latencies for different node types
+// `err` is the BASELINE error rate at nominal (non-saturated) load — it only
+// climbs above this once utilization exceeds 95% (see the status/errRate
+// calc below). service (0.1 = 10%) and database (0.5 = 50%) were previously
+// an order of magnitude out of line with every other tier, which meant the
+// database node showed "CRITICAL" at ANY load, including a healthy 500 RPS
+// baseline — errRate > 0.3 unconditionally marks a node critical regardless
+// of utilization.
 const CAPACITIES = {
   client:   { max: 100000, latency: 15,   err: 0.001 },
   cdn:      { max: 100000, latency: 5,    err: 0.001, cacheHitRate: 0.85 },
   lb:       { max: 50000,  latency: 2,    err: 0.01 },
   gateway:  { max: 25000,  latency: 5,    err: 0.02 },
-  service:  { max: 3000,   latency: 20,   err: 0.1 },
-  database: { max: 1500,   latency: 15,   err: 0.5 },
+  service:  { max: 3000,   latency: 20,   err: 0.01 },
+  database: { max: 1500,   latency: 15,   err: 0.02 },
   cache:    { max: 75000,  latency: 1.5,  err: 0.01, cacheHitRate: 0.80 },
   queue:    { max: 15000,  latency: 4,    err: 0.05 },
 }
@@ -299,7 +306,7 @@ const buildWalkthroughSteps = (pathNodes, pathEdges) => {
     switch(node.type) {
       case 'client': return 'Client receives response and renders UI page (HTTP 200 OK)'
       case 'cdn': return 'CDN caches the data and returns to load balancer'
-      case 'lb': return 'Load Balancer returns egress stream to client client'
+      case 'lb': return 'Load Balancer returns egress stream to the client'
       case 'gateway': return 'API Gateway adds security CORS headers to response payload'
       case 'service': return 'Service formats business objects and returns JSON response'
       case 'database': return 'Database returns queried row payload'
@@ -816,7 +823,7 @@ export default function SandboxTab({ design }) {
       setCurrentRPS(newCurrentRPS)
 
       // Ingress load metrics calculations
-      const flowRPS = {}
+      let flowRPS = {}
       const nodeCapacity = {}
 
       nodes.forEach(n => {
@@ -841,12 +848,22 @@ export default function SandboxTab({ design }) {
         })
       }
 
+      // Multi-hop relaxation: each pass recomputes downstream flow from the
+      // PREVIOUS pass's values, converging once traffic has propagated
+      // through the deepest path in the graph (5 passes covers any
+      // realistic architecture depth). Each pass starts fresh (only re-seeded
+      // with the constant entry RPS) — accumulating across passes instead of
+      // resetting was multiplying every downstream node's traffic by ~5x.
       const activeEdges = {}
       for (let iter = 0; iter < 5; iter++) {
+        const nextFlow = {}
+        nodes.forEach(n => { nextFlow[n.id] = 0 })
+        entryNodes.forEach(n => { nextFlow[n.id] = flowRPS[n.id] })
+
         edges.forEach(e => {
           const srcId = e.source
           const tgtId = e.target
-          
+
           if (chaosState.gatewayDown && (srcId === 'gateway' || tgtId === 'gateway' || nodes.find(n => n.id === srcId)?.type === 'gateway' || nodes.find(n => n.id === tgtId)?.type === 'gateway')) {
             activeEdges[e.id] = { state: 'error', speed: 0, rps: 0 }
             return
@@ -885,13 +902,15 @@ export default function SandboxTab({ design }) {
             distributedRPS = flowRPS[srcId] / outgoingEdges.length
           }
 
-          flowRPS[tgtId] += distributedRPS
+          nextFlow[tgtId] += distributedRPS
           activeEdges[e.id] = {
             state: distributedRPS > 0 ? 'running' : 'idle',
             speed: Math.max(0.5, Math.min(3, distributedRPS / 2000)),
             rps: distributedRPS,
           }
         })
+
+        flowRPS = nextFlow
       }
 
       let totalLatencySum = 0
@@ -1038,7 +1057,7 @@ export default function SandboxTab({ design }) {
           <div className="flex bg-black/40 border border-[#2a2a3d] p-0.5 rounded-full backdrop-blur-md">
             <button
               onClick={() => setSimMode('load')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all duration-200 ${
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase transition-all duration-200 ${
                 simMode === 'load'
                   ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20'
                   : 'text-[#94a3b8] hover:text-[#f1f5f9]'
@@ -1049,7 +1068,7 @@ export default function SandboxTab({ design }) {
             </button>
             <button
               onClick={() => setSimMode('walkthrough')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all duration-200 ${
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase transition-all duration-200 ${
                 simMode === 'walkthrough'
                   ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
                   : 'text-[#94a3b8] hover:text-[#f1f5f9]'
@@ -1064,7 +1083,7 @@ export default function SandboxTab({ design }) {
           <button
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-            className="flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-black/40 text-[#94a3b8] border border-[#2a2a3d] hover:text-[#f1f5f9] hover:bg-[#1a1a28] backdrop-blur-md transition-colors"
+            className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-black/40 text-[#94a3b8] border border-[#2a2a3d] hover:text-[#f1f5f9] hover:bg-[#1a1a28] backdrop-blur-md transition-colors"
           >
             {isFullscreen ? <Minimize2 size={10} /> : <Maximize2 size={10} />}
             {isFullscreen ? 'Exit' : 'Fullscreen'}
@@ -1135,7 +1154,7 @@ export default function SandboxTab({ design }) {
 
               {/* Ingress Load Slider */}
               <div className="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-1 bg-[#0a0a0f]/50 border border-[#2a2a3d]/50 rounded-xl">
-                <span className="text-[10px] text-[#4a4a6a] font-bold uppercase tracking-wider">Load</span>
+                <span className="text-[11px] text-[#94a3b8] font-semibold uppercase tracking-wider">Load</span>
                 <button
                   onClick={() => setTargetRPS(prev => Math.max(10, prev - 500))}
                   className="w-6 h-6 rounded-md bg-[#1a1a28] hover:bg-[#222235] text-[#94a3b8] flex items-center justify-center font-bold text-sm"
@@ -1161,13 +1180,13 @@ export default function SandboxTab({ design }) {
                   <Plus size={11} />
                 </button>
                 <span className="text-xs text-[#e2e8f0] font-mono font-bold w-20 text-right">
-                  {targetRPS.toLocaleString()} <span className="text-[10px] text-[#4a4a6a]">RPS</span>
+                  {targetRPS.toLocaleString()} <span className="text-xs text-[#94a3b8]">RPS</span>
                 </span>
               </div>
 
               {/* Presets dropdown */}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[#4a4a6a] font-bold uppercase tracking-wider hidden lg:inline">Traffic Preset</span>
+                <span className="text-[11px] text-[#94a3b8] font-semibold uppercase tracking-wider hidden lg:inline">Traffic Preset</span>
                 <select
                   value={trafficPreset}
                   onChange={(e) => setTrafficPreset(e.target.value)}
@@ -1261,12 +1280,12 @@ export default function SandboxTab({ design }) {
                           className={`transition-colors flex-shrink-0 ${
                             isIncomingEdgeActive
                               ? 'text-[#a855f7] scale-110 duration-300'
-                              : 'text-[#4a4a6a]'
+                              : 'text-[#94a3b8]'
                           }`}
                         />
                       )}
                       <span
-                        className={`text-[9px] font-bold font-mono px-2 py-0.5 rounded border transition-all duration-300 whitespace-nowrap ${
+                        className={`text-[11px] font-bold font-mono px-2 py-0.5 rounded border transition-all duration-300 whitespace-nowrap ${
                           isNodeActive
                             ? 'bg-[#a855f7]/15 border-[#a855f7] text-[#a855f7] shadow-[0_0_10px_rgba(168,85,247,0.2)]'
                             : 'bg-black/30 border-[#2a2a3d]/50 text-[#94a3b8]'
@@ -1281,7 +1300,7 @@ export default function SandboxTab({ design }) {
 
               {/* Speed Selector */}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[#4a4a6a] font-bold uppercase tracking-wider hidden lg:inline">Play Speed</span>
+                <span className="text-[11px] text-[#94a3b8] font-semibold uppercase tracking-wider hidden lg:inline">Play Speed</span>
                 <select
                   value={walkthroughSpeed}
                   onChange={(e) => setWalkthroughSpeed(Number(e.target.value))}
@@ -1298,11 +1317,11 @@ export default function SandboxTab({ design }) {
 
           {/* Chaos Console Injectors */}
           <div className="border-t border-[#2a2a3d]/40 pt-3 flex flex-wrap items-center gap-2">
-            <span className="text-[9px] text-[#4a4a6a] font-bold uppercase tracking-wider mr-2">Chaos Console:</span>
+            <span className="text-[11px] text-[#94a3b8] font-semibold uppercase tracking-wider mr-2">Chaos Console:</span>
             
             <button
               onClick={() => toggleChaos('cacheOffline')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all duration-150 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-150 ${
                 chaosState.cacheOffline
                   ? 'bg-red-500/10 border-red-500/40 text-red-400 shadow-md shadow-red-500/10'
                   : 'bg-[#0a0a0f] border-[#2a2a3d] text-[#94a3b8] hover:border-red-500/30'
@@ -1314,7 +1333,7 @@ export default function SandboxTab({ design }) {
 
             <button
               onClick={() => toggleChaos('gatewayDown')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all duration-150 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-150 ${
                 chaosState.gatewayDown
                   ? 'bg-red-500/10 border-red-500/40 text-red-400 shadow-md shadow-red-500/10'
                   : 'bg-[#0a0a0f] border-[#2a2a3d] text-[#94a3b8] hover:border-red-500/30'
@@ -1326,7 +1345,7 @@ export default function SandboxTab({ design }) {
 
             <button
               onClick={() => toggleChaos('dbLatencySpike')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all duration-150 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-150 ${
                 chaosState.dbLatencySpike
                   ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 shadow-md shadow-amber-500/10'
                   : 'bg-[#0a0a0f] border-[#2a2a3d] text-[#94a3b8] hover:border-amber-500/30'
@@ -1338,7 +1357,7 @@ export default function SandboxTab({ design }) {
 
             <button
               onClick={() => toggleChaos('killRandomService')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all duration-150 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-150 ${
                 chaosState.killRandomService
                   ? 'bg-red-500/10 border-red-500/40 text-red-400 shadow-md shadow-red-500/10'
                   : 'bg-[#0a0a0f] border-[#2a2a3d] text-[#94a3b8] hover:border-red-500/30'
@@ -1375,7 +1394,7 @@ export default function SandboxTab({ design }) {
             <>
               {/* Ingress RPS Stat */}
               <div className="bg-[#0a0a0f] border border-[#2a2a3d]/60 rounded-xl p-3 space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] text-[#4a4a6a] uppercase font-bold tracking-wider">
+                <div className="flex items-center justify-between text-[11px] text-[#94a3b8] uppercase font-semibold tracking-wider">
                   <span>Traffic Ingress</span>
                   <span className="text-[#3b82f6] font-mono">{currentRPS} RPS</span>
                 </div>
@@ -1384,7 +1403,7 @@ export default function SandboxTab({ design }) {
 
               {/* Average Latency Stat */}
               <div className="bg-[#0a0a0f] border border-[#2a2a3d]/60 rounded-xl p-3 space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] text-[#4a4a6a] uppercase font-bold tracking-wider">
+                <div className="flex items-center justify-between text-[11px] text-[#94a3b8] uppercase font-semibold tracking-wider">
                   <span>Average Latency</span>
                   <span className={`font-mono ${telemetry.avgLatency > 500 ? 'text-red-400' : telemetry.avgLatency > 150 ? 'text-amber-400' : 'text-[#10b981]'}`}>
                     {telemetry.avgLatency >= 1000 ? `${(telemetry.avgLatency / 1000).toFixed(2)}s` : `${Math.round(telemetry.avgLatency)}ms`}
@@ -1395,7 +1414,7 @@ export default function SandboxTab({ design }) {
 
               {/* Global Error Rate Stat */}
               <div className="bg-[#0a0a0f] border border-[#2a2a3d]/60 rounded-xl p-3 space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] text-[#4a4a6a] uppercase font-bold tracking-wider">
+                <div className="flex items-center justify-between text-[11px] text-[#94a3b8] uppercase font-semibold tracking-wider">
                   <span>Error Rate</span>
                   <span className={`font-mono ${telemetry.globalErrorRate > 0.1 ? 'text-red-400' : 'text-[#10b981]'}`}>
                     {(telemetry.globalErrorRate * 100).toFixed(2)}%
@@ -1406,11 +1425,11 @@ export default function SandboxTab({ design }) {
             </>
           ) : (
             <div className="bg-[#0a0a0f] border border-[#2a2a3d]/60 rounded-xl p-4 space-y-3">
-              <div className="text-[10px] text-[#4a4a6a] font-bold uppercase tracking-wider">Active Walkthrough Path</div>
+              <div className="text-[11px] text-[#94a3b8] font-semibold uppercase tracking-wider">Active Walkthrough Path</div>
               <div className="text-xs text-[#f1f5f9] leading-relaxed">
                 {walkthroughStep !== null ? (
                   <>
-                    <div className="text-[10px] font-mono text-[#a855f7] mb-1 font-bold">
+                    <div className="text-xs font-mono text-[#a855f7] mb-1 font-bold">
                       STEP {walkthroughStep + 1} OF {walkthroughSteps.length}
                     </div>
                     <p className="text-sm font-semibold">{walkthroughSteps[walkthroughStep].message}</p>
@@ -1424,10 +1443,10 @@ export default function SandboxTab({ design }) {
                     {/* Syntax Highlighted Payload/SQL Telemetry Drawer */}
                     {walkthroughSteps[walkthroughStep].inspectData && (
                       <div className="mt-4 pt-3 border-t border-[#2a2a3d]/40">
-                        <div className="text-[9px] text-[#4a4a6a] font-bold uppercase tracking-wider mb-2 font-sans">
+                        <div className="text-[11px] text-[#94a3b8] font-semibold uppercase tracking-wider mb-2 font-sans">
                           Payload / Query Telemetry
                         </div>
-                        <pre className="p-2.5 rounded-lg bg-black/60 border border-[#2a2a3d]/45 font-mono text-[9px] leading-relaxed text-[#c084fc] overflow-x-auto whitespace-pre select-text max-h-[160px] custom-scrollbar shadow-inner">
+                        <pre className="p-2.5 rounded-lg bg-black/60 border border-[#2a2a3d]/45 font-mono text-[11px] leading-relaxed text-[#c084fc] overflow-x-auto whitespace-pre select-text max-h-[160px] custom-scrollbar shadow-inner">
                           {walkthroughSteps[walkthroughStep].inspectData}
                         </pre>
                       </div>
@@ -1444,12 +1463,12 @@ export default function SandboxTab({ design }) {
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div className="bg-[#0a0a0f]/50 border border-[#2a2a3d]/30 rounded-xl p-3 text-center">
               <DollarSign size={13} className="text-[#a855f7] mx-auto mb-1" />
-              <span className="block text-[8px] text-[#4a4a6a] uppercase font-bold">Estimated Cost</span>
-              <span className="text-xs font-bold text-[#e2e8f0] font-mono">${telemetry.estimatedCost.toFixed(2)}<span className="text-[8px] text-[#4a4a6a]">/hr</span></span>
+              <span className="block text-[11px] text-[#94a3b8] uppercase font-semibold">Estimated Cost</span>
+              <span className="text-xs font-bold text-[#e2e8f0] font-mono">${telemetry.estimatedCost.toFixed(2)}<span className="text-[11px] text-[#94a3b8]">/hr</span></span>
             </div>
             <div className="bg-[#0a0a0f]/50 border border-[#2a2a3d]/30 rounded-xl p-3 text-center">
               <Server size={13} className="text-[#06b6d4] mx-auto mb-1" />
-              <span className="block text-[8px] text-[#4a4a6a] uppercase font-bold">{simMode === 'load' ? 'Requests Sent' : 'Total Traces'}</span>
+              <span className="block text-[11px] text-[#94a3b8] uppercase font-semibold">{simMode === 'load' ? 'Requests Sent' : 'Total Traces'}</span>
               <span className="text-xs font-bold text-[#e2e8f0] font-mono">{telemetry.totalRequests.toLocaleString()}</span>
             </div>
           </div>
@@ -1458,11 +1477,11 @@ export default function SandboxTab({ design }) {
 
         {/* ─── Live Event Console Logs (Bottom half) ─── */}
         <div className="flex-1 flex flex-col min-h-0 bg-[#0a0a0f]/60">
-          <div className="p-3 border-b border-[#2a2a3d]/40 flex items-center gap-1.5 text-[10px] text-[#4a4a6a] font-bold uppercase tracking-wider bg-[#12121a]/30">
+          <div className="p-3 border-b border-[#2a2a3d]/40 flex items-center gap-1.5 text-[11px] text-[#94a3b8] font-semibold uppercase tracking-wider bg-[#12121a]/30">
             <Terminal size={12} className="text-[#94a3b8]" />
             Simulation Event Log
           </div>
-          <div className="flex-1 p-3 overflow-y-auto font-mono text-[10px] space-y-1.5 custom-scrollbar">
+          <div className="flex-1 p-3 overflow-y-auto font-mono text-xs space-y-1.5 custom-scrollbar">
             {logs.map((log, index) => {
               let textClass = 'text-[#94a3b8]'
               if (log.type === 'success') textClass = 'text-[#c084fc] font-semibold' // purple logs for walkthrough

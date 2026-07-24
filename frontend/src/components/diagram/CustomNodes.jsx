@@ -97,7 +97,7 @@ function NodeShell({
       <div className="px-3 py-2.5">
         {description && (
           <p
-            className="text-[#94a3b8] text-[10px] leading-relaxed mb-2"
+            className="text-[#94a3b8] text-[11px] leading-relaxed mb-2"
             style={{
               display: '-webkit-box',
               WebkitLineClamp: 2,
@@ -111,7 +111,7 @@ function NodeShell({
         {children}
         {technology && (
           <span
-            className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide animate-pulse-glow"
+            className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide animate-pulse-glow"
             style={{ background: `${glowColor}22`, color: glowColor, border: `1px solid ${glowColor}44` }}
           >
             {technology}
@@ -283,7 +283,7 @@ export function DatabaseNode({ data, selected, targetPosition = 'top', sourcePos
         <div className="px-3 py-2.5">
           {data?.description && (
             <p
-              className="text-[#94a3b8] text-[10px] leading-relaxed mb-1.5"
+              className="text-[#94a3b8] text-[11px] leading-relaxed mb-1.5"
               style={{
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -295,7 +295,7 @@ export function DatabaseNode({ data, selected, targetPosition = 'top', sourcePos
             </p>
           )}
           {data?.technology && (
-            <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide bg-[#16a34a22] text-[#4ade80] border border-[#16a34a44]">
+            <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide bg-[#16a34a22] text-[#4ade80] border border-[#16a34a44]">
               {data.technology}
             </span>
           )}

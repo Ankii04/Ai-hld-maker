@@ -18,8 +18,7 @@ export const useDesign = () => {
     isGenerating,
     isChallenging,
     error,
-    generationStep,
-    generationStepIndex,
+    generationStartedAt,
 
     /* CRUD actions */
     fetchDesigns,
@@ -50,8 +49,7 @@ export const useDesign = () => {
     isGenerating,
     isChallenging,
     error,
-    generationStep,
-    generationStepIndex,
+    generationStartedAt,
     fetchDesigns,
     fetchDesign,
     createDesign,

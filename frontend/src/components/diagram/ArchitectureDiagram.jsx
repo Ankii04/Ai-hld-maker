@@ -157,18 +157,18 @@ function NodeEditDrawer({ node, onClose, onSave, onDelete }) {
       {/* Drawer Body */}
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
         <div>
-          <label className="block text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1.5">
+          <label className="block text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1.5">
             Label
           </label>
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            className="w-full bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] placeholder-[#4a4a6a] focus:outline-none focus:border-[#3b82f6] transition-colors"
+            className="w-full bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] placeholder-[#3a3a55] focus:outline-none focus:border-[#3b82f6] transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1.5">
+          <label className="block text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1.5">
             Node Type
           </label>
           <select
@@ -185,26 +185,26 @@ function NodeEditDrawer({ node, onClose, onSave, onDelete }) {
         </div>
 
         <div>
-          <label className="block text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1.5">
+          <label className="block text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1.5">
             Description
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            className="w-full bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] placeholder-[#4a4a6a] focus:outline-none focus:border-[#3b82f6] transition-colors resize-none"
+            className="w-full bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] placeholder-[#3a3a55] focus:outline-none focus:border-[#3b82f6] transition-colors resize-none"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1.5">
+          <label className="block text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1.5">
             Technology
           </label>
           <input
             value={technology}
             onChange={(e) => setTechnology(e.target.value)}
             placeholder="e.g. Redis, PostgreSQL"
-            className="w-full bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] placeholder-[#4a4a6a] focus:outline-none focus:border-[#3b82f6] transition-colors"
+            className="w-full bg-[#1a1a28] border border-[#2a2a3d] rounded-lg px-3 py-2 text-sm text-[#f1f5f9] placeholder-[#3a3a55] focus:outline-none focus:border-[#3b82f6] transition-colors"
           />
         </div>
       </div>
@@ -571,7 +571,7 @@ export default function ArchitectureDiagram({
                 className="flex flex-col items-center gap-1 px-2.5 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/15 active:scale-95 transition-all min-w-[44px]"
               >
                 <LayoutGrid size={14} />
-                <span className="text-[9px] font-semibold leading-none">Layout</span>
+                <span className="text-[11px] font-semibold leading-none">Layout</span>
               </button>
 
               {/* Fullscreen Button */}
@@ -581,7 +581,7 @@ export default function ArchitectureDiagram({
                 className="flex flex-col items-center gap-1 px-2.5 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/15 active:scale-95 transition-all min-w-[44px]"
               >
                 {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                <span className="text-[9px] font-semibold leading-none">
+                <span className="text-[11px] font-semibold leading-none">
                   {isFullscreen ? 'Exit' : 'Full'}
                 </span>
               </button>
@@ -601,7 +601,7 @@ export default function ArchitectureDiagram({
                     >
                       <Icon size={14} style={{ color }} />
                       <span
-                        className="text-[9px] font-semibold leading-none"
+                        className="text-[11px] font-semibold leading-none"
                         style={{ color }}
                       >
                         {label}
@@ -622,7 +622,7 @@ export default function ArchitectureDiagram({
                 }`}
               >
                 {isOpen ? <X size={14} /> : <Plus size={14} />}
-                <span className="text-[9px] font-bold leading-none">
+                <span className="text-[11px] font-bold leading-none">
                   {isOpen ? 'Close' : 'Add Node'}
                 </span>
               </button>

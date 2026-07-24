@@ -7,9 +7,9 @@ export const ARCHITECTURE_TEMPLATES = [
     summary: 'A standard robust 3-tier SaaS system design optimized for low-latency client reads, session caching, relational transactions, and async background workers.',
     status: 'generated',
     constraints: {
-      scale: 'Enterprise Scale',
+      scale: 'Enterprise',
       budget: 'Medium',
-      expectedUsers: '100K - 1M',
+      expectedUsers: '100K–1M',
       techPreferences: ['React', 'Node.js', 'Go', 'PostgreSQL', 'Redis', 'Kafka']
     },
     hld: {
@@ -141,7 +141,7 @@ export const ARCHITECTURE_TEMPLATES = [
     summary: 'A highly scalable CQRS system design built to handle massive transactional throughput by decoupling command and query pipelines completely.',
     status: 'generated',
     constraints: {
-      scale: 'Enterprise Scale',
+      scale: 'Enterprise',
       budget: 'High',
       expectedUsers: '1M+',
       techPreferences: ['React', 'Java', 'Python', 'Kafka', 'PostgreSQL', 'Elasticsearch']
@@ -239,9 +239,9 @@ export const ARCHITECTURE_TEMPLATES = [
     summary: 'A time-series streaming blueprint designed for IoT logs ingestion, real-time analytics, dashboards, and stream processing.',
     status: 'generated',
     constraints: {
-      scale: 'Enterprise Scale',
+      scale: 'Enterprise',
       budget: 'High',
-      expectedUsers: '10M+ Logs',
+      expectedUsers: '1M+',
       techPreferences: ['Node.js', 'Python', 'RabbitMQ', 'Apache Flink', 'InfluxDB']
     },
     hld: {
