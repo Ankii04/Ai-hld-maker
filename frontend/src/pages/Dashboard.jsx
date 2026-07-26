@@ -176,13 +176,13 @@ const NewDesignModal = ({ onClose, onCreate }) => {
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2a2a3d] bg-[#12121a]/95 flex-shrink-0">
-          <button onClick={onClose} className="btn btn-ghost">
+          <button onClick={onClose} className="vesper-btn vesper-btn-ghost">
             Cancel
           </button>
           <button
             onClick={handleCreate}
             disabled={!name.trim() || isCreating}
-            className="btn btn-primary"
+            className="vesper-btn vesper-btn-primary"
           >
             {isCreating ? (
               <>
@@ -325,7 +325,7 @@ const EmptyState = ({ onNew }) => (
     <p className="text-[#94a3b8] text-sm max-w-xs leading-relaxed mb-6">
       Create your first architecture blueprint. Describe any product and let AI do the heavy lifting.
     </p>
-    <button onClick={onNew} className="btn btn-primary">
+    <button onClick={onNew} className="vesper-btn vesper-btn-primary">
       <Plus className="w-4 h-4" />
       Create First Design
     </button>
@@ -463,7 +463,7 @@ const ProfileSettingsModal = ({ onClose, user, activeTab = 'profile', designs = 
 
         {/* Footer */}
         <div className="flex items-center justify-end px-6 py-4 border-t border-[#2a2a3d] bg-[#12121a]/95">
-          <button onClick={onClose} className="btn btn-primary">
+          <button onClick={onClose} className="vesper-btn vesper-btn-primary">
             Close
           </button>
         </div>
@@ -540,20 +540,16 @@ const Dashboard = () => {
   const currentFilter = filterOptions.find((o) => o.value === filter)
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-[#f1f5f9]">
+    <div className="min-h-screen bg-black text-[#f1f5f9]">
       {/* ── Navbar ── */}
-      <nav className="fixed top-0 left-0 right-0 z-40 border-b border-[#2a2a3d] bg-[#0a0a0f]/90 backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 right-0 z-40 border-b border-white/[0.06] bg-black/60 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => navigate('/')}
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-md shadow-blue-500/30">
-              <BrainCircuit className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-heading text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              ArchMind
-            </span>
+            <BrainCircuit className="w-4 h-4 text-white" />
+            <span className="text-[15px] font-medium tracking-tight text-white">ArchMind</span>
           </div>
           <UserMenu
             user={user}
@@ -579,14 +575,14 @@ const Dashboard = () => {
         {/* Section header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="font-heading text-2xl font-bold text-[#f1f5f9]">My Designs</h1>
+            <h1 className="vesper-display text-2xl text-[#f1f5f9]">My <span className="vesper-grad">Designs</span></h1>
             <p className="text-[#94a3b8] text-sm mt-0.5">
               {designs?.length || 0} architecture{designs?.length !== 1 ? 's' : ''} created
             </p>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="btn btn-primary"
+            className="vesper-btn vesper-btn-primary"
           >
             <Plus className="w-4 h-4" />
             New Design

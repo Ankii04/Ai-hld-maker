@@ -47,16 +47,12 @@ const LeftPanel = () => (
       <div className="w-full max-w-xs">
         {/* Brand */}
         <div className="flex items-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xl shadow-purple-500/30">
-            <BrainCircuit className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-heading text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            ArchMind
-          </span>
+          <BrainCircuit className="w-5 h-5 text-white" />
+          <span className="text-lg font-medium tracking-tight text-white">ArchMind</span>
         </div>
 
-        <h2 className="font-heading text-2xl font-bold text-[#f1f5f9] mb-3">
-          Your AI system designer
+        <h2 className="vesper-display text-2xl text-[#f1f5f9] mb-3">
+          Your AI <span className="vesper-grad">system designer</span>
         </h2>
         <p className="text-[#94a3b8] text-sm leading-relaxed mb-8">
           Describe any product. Get a production-ready technical blueprint in seconds.
@@ -156,7 +152,7 @@ const Signup = () => {
   const strength = passwordStrength()
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex">
+    <div className="min-h-screen bg-black flex">
       <LeftPanel />
 
       {/* Right: form */}
@@ -164,17 +160,13 @@ const Signup = () => {
         <div className="w-full max-w-md">
           {/* Logo (mobile only) */}
           <div className="flex lg:hidden items-center gap-2 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <BrainCircuit className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-heading text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              ArchMind
-            </span>
+            <BrainCircuit className="w-4 h-4 text-white" />
+            <span className="text-lg font-medium tracking-tight text-white">ArchMind</span>
           </div>
 
           {/* Heading */}
           <div className="mb-8">
-            <h1 className="font-heading text-3xl font-bold text-[#f1f5f9] mb-2">Create your account</h1>
+            <h1 className="vesper-display text-3xl text-[#f1f5f9] mb-2">Create your <span className="vesper-grad">account</span></h1>
             <p className="text-[#94a3b8] text-sm">
               Free plan includes <span className="text-blue-400 font-medium">3 full designs per month</span> — no credit card required.
             </p>
@@ -280,7 +272,7 @@ const Signup = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-400 hover:to-purple-500 transition-all duration-200 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="vesper-btn vesper-btn-primary w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -303,10 +295,7 @@ const Signup = () => {
             </div>
           </div>
 
-          <Link
-            to="/login"
-            className="block w-full text-center py-3 rounded-xl border border-[#2a2a3d] text-[#f1f5f9] text-sm font-semibold hover:bg-[#12121a] hover:border-[#8b5cf6]/30 transition-all duration-200 hover:shadow-[0_0_20px_rgba(139,92,246,0.08)]"
-          >
+          <Link to="/login" className="vesper-btn vesper-btn-ghost w-full justify-center">
             Sign in instead
           </Link>
         </div>

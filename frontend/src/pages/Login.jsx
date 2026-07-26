@@ -156,7 +156,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex">
+    <div className="min-h-screen bg-black flex">
       <LeftPanel />
 
       {/* Right: form */}
@@ -164,17 +164,13 @@ const Login = () => {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="flex items-center gap-2 mb-10">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <BrainCircuit className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-heading text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              ArchMind
-            </span>
+            <BrainCircuit className="w-[18px] h-[18px] text-white" />
+            <span className="text-[15px] font-medium tracking-tight text-white">ArchMind</span>
           </div>
 
           {/* Heading */}
           <div className="mb-8">
-            <h1 className="font-heading text-3xl font-bold text-[#f1f5f9] mb-2">Welcome back</h1>
+            <h1 className="vesper-display text-3xl text-[#f1f5f9] mb-2">Welcome <span className="vesper-grad">back</span></h1>
             <p className="text-[#94a3b8] text-sm">Sign in to your account to continue designing.</p>
           </div>
 
@@ -242,7 +238,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-400 hover:to-purple-500 transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:from-blue-500 disabled:hover:to-purple-600"
+              className="vesper-btn vesper-btn-primary w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -265,10 +261,7 @@ const Login = () => {
             </div>
           </div>
 
-          <Link
-            to="/signup"
-            className="block w-full text-center py-3 rounded-xl border border-[#2a2a3d] text-[#f1f5f9] text-sm font-semibold hover:bg-[#12121a] hover:border-[#3b82f6]/30 transition-all duration-200 hover:shadow-[0_0_20px_rgba(59,130,246,0.08)]"
-          >
+          <Link to="/signup" className="vesper-btn vesper-btn-ghost w-full justify-center">
             Create a free account
           </Link>
         </div>
