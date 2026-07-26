@@ -1216,6 +1216,18 @@
 }
 
 /* fine film grain */
+/* Containing block for the ::after grain layer below — without this, its
+   `position: absolute` has no positioned ancestor and escapes all the way
+   to the initial containing block (the viewport itself). Combined with
+   `inset: -50%`, that put the pseudo-element's right/bottom edges at 150%
+   of the viewport's own size, which is exactly what was silently forcing
+   mobile browsers to widen the whole page's layout viewport 1.5x beyond
+   the device width — the real cause of the clipped/shifted mobile layout,
+   nothing to do with ParticleBloom. */
+.vesper-grain {
+  position: relative;
+}
+
 .vesper-grain::after {
   content: '';
   position: absolute;
