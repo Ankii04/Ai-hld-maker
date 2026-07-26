@@ -1156,15 +1156,18 @@
   background: #14141f;
 }
 
-/* ── Scroll reveal (used with IntersectionObserver) ── */
+/* ── Scroll reveal — 3D lift (used with IntersectionObserver) ── */
 .reveal {
   opacity: 0;
-  transform: translateY(22px);
-  transition: opacity 500ms ease, transform 500ms ease;
+  transform: perspective(1200px) translateY(34px) rotateX(7deg);
+  transform-origin: 50% 100%;
+  transition: opacity 700ms cubic-bezier(0.22, 0.7, 0.2, 1),
+              transform 800ms cubic-bezier(0.22, 0.7, 0.2, 1);
+  will-change: transform, opacity;
 }
 .reveal.reveal-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: perspective(1200px) translateY(0) rotateX(0deg);
 }
 
 /* ── Reduced motion: everything settles into a static composition ── */
@@ -1180,4 +1183,130 @@
     transform: none;
     transition: none;
   }
+}
+
+/* ============================================================
+   Vesper landing — cinematic particle aesthetic
+   (getlayers-inspired: pure black, thin type, glow, grain)
+   ============================================================ */
+.vesper {
+  background: #000005;
+  color: #eef1f6;
+}
+
+/* radial atmosphere behind the bloom */
+.vesper-atmos {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 55% at 50% 42%, rgba(56, 189, 148, 0.10), transparent 60%),
+    radial-gradient(50% 50% at 62% 60%, rgba(139, 92, 246, 0.12), transparent 62%),
+    radial-gradient(45% 45% at 38% 58%, rgba(56, 132, 246, 0.10), transparent 62%);
+}
+
+/* fine film grain */
+.vesper-grain::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 6s steps(6) infinite;
+}
+@keyframes grain-shift {
+  0%,100% { transform: translate(0,0); }
+  20% { transform: translate(-4%, 3%); }
+  40% { transform: translate(3%, -2%); }
+  60% { transform: translate(-2%, -3%); }
+  80% { transform: translate(2%, 2%); }
+}
+
+/* bottom vignette so content grounds into black */
+.vesper-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(0,0,2,0.85) 100%);
+}
+
+/* thin cinematic display type */
+.vesper-display {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+}
+
+/* monospace bracket tag: [ LIVING INTERFACE ] */
+.vesper-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8a93a6;
+}
+.vesper-tag::before { content: '[ '; color: #4a5568; }
+.vesper-tag::after  { content: ' ]'; color: #4a5568; }
+
+/* gradient hairline divider */
+.vesper-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(120,140,180,0.28), transparent);
+}
+
+/* green→purple gradient text, matching the bloom */
+.vesper-grad {
+  background: linear-gradient(100deg, #4ade80 0%, #22d3ee 34%, #6aa8ff 62%, #b98bff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* glass chip / bordered card on black */
+.vesper-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+  transition: border-color 220ms ease, background-color 220ms ease, transform 220ms ease;
+}
+.vesper-card:hover {
+  border-color: rgba(140,160,200,0.24);
+  background: rgba(255,255,255,0.035);
+  transform: translateY(-2px);
+}
+
+/* pill button, Vesper style */
+.vesper-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.vesper-btn-primary {
+  background: #f2f4f8;
+  color: #06060a;
+}
+.vesper-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 30px rgba(180,200,255,0.25);
+}
+.vesper-btn-ghost {
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #d6dae4;
+}
+.vesper-btn-ghost:hover {
+  border-color: rgba(255,255,255,0.34);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vesper-grain::after { animation: none; }
 }
