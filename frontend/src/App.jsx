@@ -146,6 +146,16 @@ const toasterOptions = {
 const App = () => {
   useEffect(() => {
     const handleWindowError = (event) => {
+      // "ResizeObserver loop limit exceeded" (and its Firefox-worded sibling)
+      // is a benign browser safety message, not a real app failure — it
+      // fires whenever a ResizeObserver callback (e.g. the canvas resize
+      // handlers on the Landing hero / diagram tabs) changes something the
+      // same observer is watching. It never affects functionality, so
+      // surfacing it as a scary toast on every mobile visit is a false
+      // positive worth swallowing at the source.
+      const msg = String(event.message || event.error?.message || '')
+      if (msg.includes('ResizeObserver loop')) return
+
       console.error('Global Error:', event.error || event.message)
       toast.error('An unexpected error occurred.')
     }
