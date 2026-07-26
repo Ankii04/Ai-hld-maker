@@ -245,7 +245,7 @@ export default function UserFlowDiagram({
       )}
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mb-3">
+      <div className="flex items-center flex-wrap gap-x-4 gap-y-1.5 mb-3">
         {[
           { color: '#16a34a', label: 'Entry Screen' },
           { color: '#3b82f6', label: 'Core Screen' },

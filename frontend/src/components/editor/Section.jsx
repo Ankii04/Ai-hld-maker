@@ -27,7 +27,7 @@ export function Overline({ children, className = '' }) {
 /* ── Tab-level header: the one h2 per tab ──────────────────── */
 export function TabHeader({ title, description, actions, className = '' }) {
   return (
-    <header className={`flex items-start justify-between gap-4 ${className}`}>
+    <header className={`flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 ${className}`}>
       <div className="min-w-0">
         <h2 className="font-heading text-[17px] font-semibold leading-snug tracking-[-0.01em] text-[#f1f5f9]">
           {title}
@@ -45,7 +45,7 @@ export function TabHeader({ title, description, actions, className = '' }) {
 export function Panel({ children, className = '', padded = true, ...rest }) {
   return (
     <section
-      className={`bg-[#12121a] border border-[#2a2a3d] rounded-xl ${padded ? 'p-5' : ''} ${className}`}
+      className={`bg-[#12121a] border border-[#2a2a3d] rounded-xl ${padded ? 'p-4 sm:p-5' : ''} ${className}`}
       {...rest}
     >
       {children}
@@ -85,7 +85,7 @@ export function PanelHeader({ icon: Icon, tone = '#3b82f6', title, description, 
 export function TabShell({ id, children, className = '', width = 'wide' }) {
   const max = width === 'narrow' ? 'max-w-4xl' : 'max-w-6xl'
   return (
-    <div id={id} className={`${max} mx-auto w-full p-6 flex flex-col gap-5 ${className}`}>
+    <div id={id} className={`${max} mx-auto w-full p-4 sm:p-6 flex flex-col gap-5 ${className}`}>
       {children}
     </div>
   )
