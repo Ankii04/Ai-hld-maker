@@ -27,7 +27,7 @@ export default function IconSearchPanel({ onSelect, onClose }) {
     : CURATED_ICON_NAMES
 
   return (
-    <div className="absolute left-16 top-4 w-80 bg-[#12121a] border border-[#2a2a3d] rounded-xl shadow-2xl z-50 flex flex-col h-[400px] animate-fade-in overflow-hidden">
+    <div className="absolute left-2 sm:left-16 top-4 w-80 max-w-[calc(100vw-1rem)] bg-[#12121a] border border-[#2a2a3d] rounded-xl shadow-2xl z-50 flex flex-col h-[400px] max-h-[70vh] animate-fade-in overflow-hidden">
       {/* Header / Search */}
       <div className="p-3 border-b border-[#2a2a3d] flex items-center gap-2 bg-[#1a1a28]">
         <Search className="w-4 h-4 text-[#94a3b8]" />

@@ -73,7 +73,7 @@ export default function HLDTab({ design, onNodesChange, onEdgesChange, readOnly 
       />
 
       {/* Architecture Diagram — keeps its own explicit height container */}
-      <div className="rounded-xl overflow-hidden border border-[#2a2a3d] bg-[#0a0a0f] h-[600px] relative">
+      <div className="rounded-xl overflow-hidden border border-[#2a2a3d] bg-[#0a0a0f] h-[380px] sm:h-[460px] lg:h-[600px] relative">
         <div className="absolute top-3 left-3 z-10">
           <span className="px-2.5 py-1 rounded-full bg-[#3b82f6]/20 border border-[#3b82f6]/30">
             <Overline className="!text-[#3b82f6]">High Level Design</Overline>

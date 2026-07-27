@@ -524,9 +524,15 @@ export default function SandboxTab({ design }) {
     }
   }, [JSON.stringify(blueprintNodes), JSON.stringify(blueprintEdges)])
 
-  // Auto-scroll log console
+  // Auto-scroll log console — set scrollTop directly on the log console's own
+  // scrollable div rather than consoleEndRef.scrollIntoView(). scrollIntoView
+  // bubbles up to find a scrollable ancestor, and on first mount (before this
+  // div's content has overflowed) it was bubbling all the way to the tab
+  // content panel, nudging the whole Sandbox tab down by a few pixels the
+  // instant it opened.
   useEffect(() => {
-    consoleEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const container = consoleEndRef.current?.parentElement
+    if (container) container.scrollTop = container.scrollHeight
   }, [logs])
 
   // Add a line of log

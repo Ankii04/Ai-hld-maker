@@ -145,9 +145,19 @@ export default function ParticleBloom({ className = '', count = 5200, offsetX = 
       const zoom = 1 + sc * 0.9
       const disperse = 1 + sc * 1.1 // points fly outward
       const fade = 1 - sc * 0.82 // dissolve on scroll
-      const scale = Math.min(W, H) * 0.46 * zoom
+      // On narrow/short viewports the bloom's footprint (radius ≈ scale) covers
+      // most of the screen, sprawling into the CTA button and tag row below the
+      // fold. Shrink it, dim it, and pull its center up so it stays a headline
+      // accent instead of fighting the buttons for contrast.
+      const isNarrow = W < 480
+      const isCompact = W < 768
+      const mobileScaleDamp = isNarrow ? 0.55 : isCompact ? 0.78 : 1
+      const mobileAlphaDamp = isNarrow ? 0.62 : isCompact ? 0.85 : 1
+      const mobileYShift = isNarrow ? -0.16 : isCompact ? -0.08 : 0
+
+      const scale = Math.min(W, H) * 0.46 * zoom * mobileScaleDamp
       const cx = W / 2 + W * offsetX
-      const cy = H / 2 + H * (0.04 + offsetY) + sc * H * 0.12
+      const cy = H / 2 + H * (0.04 + offsetY + mobileYShift) + sc * H * 0.12
       const persp = 2.6
       const breathe = reduce ? 1 : 1 + Math.sin(time * 0.0006) * 0.015
 
@@ -200,7 +210,7 @@ export default function ParticleBloom({ className = '', count = 5200, offsetX = 
         const q = proj[i]
         // depth fog: nearer = brighter/bigger
         const f = (q.d + 1.1) / 2.2 // ~0..1
-        const alpha = (0.22 + f * 0.72) * fade
+        const alpha = (0.22 + f * 0.72) * fade * mobileAlphaDamp
         const size = 0.9 + f * 1.9
         const light = 50 + f * 18
         ctx.fillStyle = `hsla(${q.hue},88%,${light}%,${alpha})`

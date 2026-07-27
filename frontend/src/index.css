@@ -49,6 +49,13 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    width: 100%;
+    /* Stop Android Chrome's "font boosting", which auto-inflates text inside
+       narrow columns without re-flowing the fixed/absolute decorative layers
+       around it — the real cause of clipped hero text on real devices. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -56,6 +63,7 @@
     background-color: #0a0a0f;
     color: #f1f5f9;
     overflow-x: hidden;
+    width: 100%;
     min-height: 100vh;
     line-height: 1.6;
   }
@@ -1206,6 +1214,14 @@
 }
 
 /* fine film grain */
+/* Containing block for the ::after grain layer below — without this, its
+   `position: absolute` has no positioned ancestor and escapes to the
+   viewport itself. Combined with `inset: -50%`, that silently widened the
+   whole page's layout viewport 1.5x beyond the device width on mobile. */
+.vesper-grain {
+  position: relative;
+}
+
 .vesper-grain::after {
   content: '';
   position: absolute;

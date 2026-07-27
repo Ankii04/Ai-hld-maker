@@ -204,8 +204,7 @@ export default function DatabaseTab({ design }) {
       />
       {/* ER Diagram */}
       <div
-        className="rounded-xl overflow-hidden border border-[#2a2a3d] bg-[#0a0a0f] relative"
-        style={{ height: 480 }}
+        className="rounded-xl overflow-hidden border border-[#2a2a3d] bg-[#0a0a0f] relative h-[300px] sm:h-[380px] lg:h-[480px]"
       >
         <div className="absolute top-3 left-3 z-10">
           <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.08em] bg-[#16a34a]/20 text-[#4ade80] border border-[#16a34a]/30">

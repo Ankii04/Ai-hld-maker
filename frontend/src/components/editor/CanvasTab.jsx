@@ -303,7 +303,7 @@ export default function CanvasTab({ design }) {
   )
 
   return (
-    <div id="canvas-tab" className="flex flex-col h-[700px] w-full bg-[#0a0a0f] relative" ref={reactFlowWrapper}>
+    <div id="canvas-tab" className="flex flex-col h-[420px] sm:h-[560px] lg:h-[700px] w-full bg-[#0a0a0f] relative" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={nodesWithHandlers}
         edges={edges}
