@@ -51,13 +51,6 @@
     scroll-behavior: smooth;
     overflow-x: hidden;
     width: 100%;
-    /* Stop Android Chrome's "font boosting": it auto-inflates text inside
-       narrow text columns to a size it guesses is more readable, without
-       re-flowing the fixed/absolute decorative layers around it — the
-       exact cause of clipped, oversized hero text on real devices that
-       never reproduces in desktop responsive-mode emulation. */
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
   }
 
   body {
