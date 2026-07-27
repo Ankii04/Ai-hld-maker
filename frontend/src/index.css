@@ -1215,13 +1215,14 @@
 }
 
 /* fine film grain */
-/* Containing block for the ::after grain layer below — without this, its
-   `position: absolute` has no positioned ancestor and escapes to the
-   viewport itself. Combined with `inset: -50%`, that silently widened the
-   whole page's layout viewport 1.5x beyond the device width on mobile. */
-.vesper-grain {
-  position: relative;
-}
+/* .vesper-grain now only ever sits on the page's fixed inset-0 viewport
+   layer (see Landing.jsx), which is already `position: fixed` — a valid
+   containing block for the ::after pseudo-element below on its own, so no
+   position rule is needed here. Do NOT add `position: relative` back: on
+   an element that also carries Tailwind's `fixed` class, a same-specificity
+   class-selector `position` here can win the cascade over `.fixed` and
+   silently turn `position: fixed` into `relative`, collapsing the box to
+   height 0 (this took out the whole particle-bloom canvas once already). */
 
 .vesper-grain::after {
   content: '';
