@@ -595,7 +595,7 @@ const Editor = () => {
       {isLoading ? (
         <LoadingScreen />
       ) : (
-        <div className="flex flex-1 min-h-0 min-w-0">
+        <div className="flex flex-1 min-h-0">
           {/* Mobile Sidebar Backdrop */}
           {isSidebarOpen && (
             <div 
@@ -630,11 +630,7 @@ const Editor = () => {
           </aside>
 
           {/* Right: Tab content */}
-          {/* min-w-0 is load-bearing: a flex item's default min-width:auto
-              refuses to shrink below its content's intrinsic width, so any
-              tab with a wide diagram/table/pre pushed this whole pane (and
-              the mobile viewport with it) wider than the screen. */}
-          <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-[#0a0a0f]">
+          <div className="flex-1 flex flex-col min-h-0 bg-[#0a0a0f]">
             {currentDesign ? (
               <>
                 <TabBar
