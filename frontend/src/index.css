@@ -49,8 +49,6 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     scroll-behavior: smooth;
-    overflow-x: hidden;
-    width: 100%;
     /* Stop Android Chrome's "font boosting", which auto-inflates text inside
        narrow columns without re-flowing the fixed/absolute decorative layers
        around it — the real cause of clipped hero text on real devices. */
@@ -62,8 +60,11 @@
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: #0a0a0f;
     color: #f1f5f9;
+    /* overflow-x is the ONLY overflow this element sets — adding it to both
+       html and body (or pairing it with an explicit overflow-y) makes each
+       element resolve overflow-y to auto independently per spec, producing
+       two separate scrollable contexts (and two visible scrollbars). */
     overflow-x: hidden;
-    width: 100%;
     min-height: 100vh;
     line-height: 1.6;
   }

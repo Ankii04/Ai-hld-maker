@@ -457,11 +457,21 @@ const Footer = () => (
 
 /* ═══════════════════════════════════════════════════════════════ */
 
+// No overflow-x-hidden on the root div below: it forces overflow-y to auto too
+// (an element can't have overflow-x hidden with overflow-y visible), which
+// trapped the whole page's scroll inside that div as a second scrollbar
+// instead of letting it bubble up to the natural page-level scroll.
+// Horizontal overflow is already contained at the body level.
 const Landing = () => (
-  <div className="vesper min-h-screen antialiased overflow-x-hidden vesper-grain">
+  <div className="vesper min-h-screen antialiased">
     {/* Fixed 3D field behind the whole page — reacts to scroll and dissolves
-        as you move down, so the hero reads as one living scene. */}
-    <div className="fixed inset-0 z-0 pointer-events-none">
+        as you move down, so the hero reads as one living scene.
+        vesper-grain + overflow-hidden live here (not on the page-scroll root
+        above) because its ::after pseudo-element is intentionally 2x this
+        box's size (inset: -50%) to bleed texture past the edges — clipping
+        that requires overflow-hidden on a viewport-fixed box, not the tall
+        scrollable page root, or it leaks into page-level horizontal scroll. */}
+    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden vesper-grain">
       <div className="vesper-atmos" />
       <ParticleBloom className="absolute inset-0" offsetX={0.1} offsetY={-0.03} scrollReactive />
       <div className="vesper-vignette" />
