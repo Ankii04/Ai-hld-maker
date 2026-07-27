@@ -41,7 +41,7 @@ const CanvasProperties = ({
   }
 
   return (
-    <div className="absolute top-20 right-2 sm:right-4 w-64 max-w-[calc(100vw-1rem)] max-h-[60vh] overflow-y-auto bg-[#12121a] border border-[#2a2a3d] p-4 rounded-xl shadow-xl z-50 text-sm animate-fade-in">
+    <div className="absolute top-20 right-4 w-64 bg-[#12121a] border border-[#2a2a3d] p-4 rounded-xl shadow-xl z-50 text-sm animate-fade-in">
       <h3 className="text-[#f1f5f9] font-bold mb-4 border-b border-[#2a2a3d] pb-2">
         {isNode ? 'Node Properties' : 'Edge Properties'}
       </h3>

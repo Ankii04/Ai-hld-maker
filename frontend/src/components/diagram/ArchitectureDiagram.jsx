@@ -142,7 +142,7 @@ function NodeEditDrawer({ node, onClose, onSave, onDelete }) {
   }
 
   return (
-    <div className="absolute top-0 right-0 h-full w-72 max-w-[85vw] bg-[#12121a] border-l border-[#2a2a3d] z-50 flex flex-col shadow-2xl">
+    <div className="absolute top-0 right-0 h-full w-72 bg-[#12121a] border-l border-[#2a2a3d] z-50 flex flex-col shadow-2xl">
       {/* Drawer Header */}
       <div className="flex items-center justify-between p-4 border-b border-[#2a2a3d]">
         <h3 className="text-sm font-semibold text-[#f1f5f9]">Edit Node</h3>
@@ -556,8 +556,8 @@ export default function ArchitectureDiagram({
 
         {/* Toolbox Panel */}
         {!readOnly && (
-          <Panel position="top-right" className="!right-2 !top-2 max-w-[calc(100vw-1rem)]">
-            <div className="flex flex-wrap items-center justify-end gap-1.5 bg-[#12121a] border border-[#2a2a3d] rounded-xl p-2 shadow-2xl backdrop-blur-md max-w-[calc(100vw-2rem)]">
+          <Panel position="top-right">
+            <div className="flex items-center gap-1.5 bg-[#12121a] border border-[#2a2a3d] rounded-xl p-2 shadow-2xl backdrop-blur-md">
               {/* Layout Button */}
               <button
                 onClick={() => {
@@ -585,12 +585,12 @@ export default function ArchitectureDiagram({
                   {isFullscreen ? 'Exit' : 'Full'}
                 </span>
               </button>
-
+              
               <div className="w-px h-6 bg-[#2a2a3d]" />
 
               {/* Expanded Node Toolbar */}
               {isOpen && (
-                <div className="flex flex-wrap items-center justify-end gap-1.5 transition-all duration-300">
+                <div className="flex items-center gap-1.5 transition-all duration-300">
                   {TOOLBOX_ITEMS.map(({ type, label, icon: Icon, color, bg }) => (
                     <button
                       key={type}
