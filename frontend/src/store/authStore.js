@@ -97,6 +97,22 @@ const useAuthStore = create(
         }))
       },
 
+      /* ─── Toggle Demo Pro (Portfolio Testing) ───────────── */
+      toggleDemoPro: async () => {
+        try {
+          const res = await api.post('/auth/demo-toggle-pro')
+          if (res?.data) {
+            set((state) => ({
+              user: { ...state.user, plan: res.data.plan },
+            }))
+            return { success: true, plan: res.data.plan }
+          }
+          return { success: false, message: 'Invalid response' }
+        } catch (err) {
+          return { success: false, message: err.message }
+        }
+      },
+
       /* ─── Clear transient error ───────────────────────────── */
       clearError: () => set({ error: null }),
     }),

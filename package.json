@@ -1,0 +1,28 @@
+{
+  "name": "archmind-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ArchMind — AI-powered System Design Generator (Monorepo)",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "test:backend": "npm run test --workspace=backend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "keywords": [
+    "system-design",
+    "architecture",
+    "ai",
+    "react",
+    "express",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "MIT"
+}

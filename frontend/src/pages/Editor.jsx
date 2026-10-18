@@ -33,6 +33,7 @@ const LLDTab = lazy(() => import('../components/editor/LLDTab'))
 const DatabaseTab = lazy(() => import('../components/editor/DatabaseTab'))
 const APITab = lazy(() => import('../components/editor/APITab'))
 const ScalabilityTab = lazy(() => import('../components/editor/ScalabilityTab'))
+const UIUXTab = lazy(() => import('../components/editor/UIUXTab'))
 const ChallengeTab = lazy(() => import('../components/editor/ChallengeTab'))
 const HistoryTab = lazy(() => import('../components/editor/HistoryTab'))
 const SandboxTab = lazy(() => import('../components/editor/SandboxTab'))
@@ -658,6 +659,7 @@ const Editor = () => {
                     {activeTab === 'database' && <DatabaseTab design={currentDesign} />}
                     {activeTab === 'apis' && <APITab design={currentDesign} />}
                     {activeTab === 'scalability' && <ScalabilityTab design={currentDesign} />}
+                    {activeTab === 'uiux' && <UIUXTab design={currentDesign} />}
                     {activeTab === 'canvas' && <CanvasTab design={currentDesign} />}
                     {activeTab === 'challenge' && (
                       <ChallengeTab

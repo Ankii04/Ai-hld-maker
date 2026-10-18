@@ -556,8 +556,8 @@ router.post('/:id/uiux/generate-mockup', async (req, res, next) => {
   }
 });
 
-// ─── POST /api/designs/:id/commit  ──────────────────────────────────────────
-router.post('/:id/commit', async (req, res, next) => {
+// ─── POST /api/designs/:id/commit & /versions ────────────────────────────────
+router.post(['/:id/commit', '/:id/versions'], async (req, res, next) => {
   try {
     const design = await findOwnedDesign(req.params.id, req.user._id, res);
     if (!design) return;
@@ -580,6 +580,12 @@ router.post('/:id/commit', async (req, res, next) => {
       database: design.database,
       scalability: design.scalability,
       uiux: design.uiux,
+      canvas: design.canvas,
+      designDecisions: design.designDecisions,
+      failureHandling: design.failureHandling,
+      security: design.security,
+      observability: design.observability,
+      systemFlow: design.systemFlow,
       authorId: req.user._id,
     });
 
@@ -646,6 +652,12 @@ router.post('/:id/versions/:versionId/rollback', async (req, res, next) => {
       database: design.database,
       scalability: design.scalability,
       uiux: design.uiux,
+      canvas: design.canvas,
+      designDecisions: design.designDecisions,
+      failureHandling: design.failureHandling,
+      security: design.security,
+      observability: design.observability,
+      systemFlow: design.systemFlow,
       authorId: req.user._id,
     });
 
@@ -655,6 +667,12 @@ router.post('/:id/versions/:versionId/rollback', async (req, res, next) => {
     if (snapshot.database) design.database = snapshot.database;
     if (snapshot.scalability) design.scalability = snapshot.scalability;
     if (snapshot.uiux) design.uiux = snapshot.uiux;
+    if (snapshot.canvas !== undefined) design.canvas = snapshot.canvas;
+    if (snapshot.designDecisions) design.designDecisions = snapshot.designDecisions;
+    if (snapshot.failureHandling) design.failureHandling = snapshot.failureHandling;
+    if (snapshot.security) design.security = snapshot.security;
+    if (snapshot.observability) design.observability = snapshot.observability;
+    if (snapshot.systemFlow) design.systemFlow = snapshot.systemFlow;
 
     await design.save();
 

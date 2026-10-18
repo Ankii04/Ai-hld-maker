@@ -37,6 +37,29 @@ const versionSchema = new Schema(
     uiux: {
       type: Schema.Types.Mixed,
     },
+    canvas: {
+      type: Schema.Types.Mixed,
+    },
+    designDecisions: {
+      type: [Schema.Types.Mixed],
+      default: [],
+    },
+    failureHandling: {
+      type: [Schema.Types.Mixed],
+      default: [],
+    },
+    security: {
+      type: [Schema.Types.Mixed],
+      default: [],
+    },
+    observability: {
+      type: [Schema.Types.Mixed],
+      default: [],
+    },
+    systemFlow: {
+      type: String,
+      default: '',
+    },
     authorId: {
       type: Types.ObjectId,
       ref: 'User',

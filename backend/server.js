@@ -222,6 +222,8 @@ process.on('uncaughtException', (err) => {
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 
-startServer();
+if (require.main === module) {
+  startServer();
+}
 
 module.exports = app; // For testing

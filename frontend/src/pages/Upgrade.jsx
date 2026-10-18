@@ -78,6 +78,31 @@ const Upgrade = () => {
           </button>
         )}
 
+        {/* Portfolio Evaluation Mode */}
+        <div className="mt-6 p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/5 text-center">
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-yellow-400 mb-1">
+            <Crown className="w-3.5 h-3.5" />
+            Portfolio Recruiter / Reviewer Mode
+          </div>
+          <p className="text-xs text-[#94a3b8] mb-3">
+            Current status: <strong className="text-white uppercase font-mono">{user?.plan || 'free'}</strong>.
+            Click below to toggle Pro features instantly for testing.
+          </p>
+          <button
+            onClick={async () => {
+              const res = await useAuthStore.getState().toggleDemoPro()
+              if (res.success) {
+                toast.success(`Account switched to ${res.plan.toUpperCase()} tier!`)
+              } else {
+                toast.error(res.message || 'Failed to switch plan')
+              }
+            }}
+            className="w-full py-2 px-3 rounded-lg bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 font-medium text-xs hover:bg-yellow-500/30 transition-colors"
+          >
+            {user?.plan === 'pro' ? 'Switch Back to Free Plan' : 'Unlock Pro Access Instantly'}
+          </button>
+        </div>
+
         <button
           onClick={() => navigate('/dashboard')}
           className="w-full py-2.5 rounded-xl text-[#94a3b8] text-sm hover:text-[#f1f5f9] transition-colors mt-3"

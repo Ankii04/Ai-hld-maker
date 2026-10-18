@@ -209,4 +209,31 @@ router.get('/me', protect, async (req, res, next) => {
   }
 });
 
+// ─── POST /api/auth/demo-toggle-pro (Portfolio Evaluation Toggle) ───────────
+router.post('/demo-toggle-pro', protect, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    user.plan = user.plan === 'pro' ? 'free' : 'pro';
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Plan toggled to ${user.plan.toUpperCase()} for portfolio testing.`,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        plan: user.plan,
+        designsGeneratedThisMonth: user.designsGeneratedThisMonth,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
